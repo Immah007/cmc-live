@@ -208,6 +208,7 @@
             z-index: 5000;
             pointer-events: none;
             opacity: 1;
+            animation: light-streak 4s linear infinite;
         }
 
 
@@ -443,7 +444,11 @@
             0% { left: -40%; }
             100% { left: 140%; }
         }
-
+@keyframes light-streak {
+            0% { left: -75%; }
+            100% { left: 10%; }
+}
+        
         /* Yellow Slash */
         @keyframes zoomFromRight {
             0% { transform: skewX(-32deg) translateX(600px) scale(0.6); opacity: 0; }
