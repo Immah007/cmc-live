@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modular Broadcast - Endless Loop</title>
+    <title>Modular Broadcast - Seamless Loop</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         /* Reset */
@@ -19,7 +19,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Poppins', sans-serif;
             overflow: hidden;
         }
 
@@ -220,7 +220,7 @@
         .main-banner h1 {
             color: #000000;
             font-size: 22px;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 2px;
             padding-left: 140px; /* Pushed right due to logo holder */
@@ -253,7 +253,6 @@
             height: 20px;
             transform: skewX(-3deg);
             background: black;
-            
         }
 
         /* --- SCROLLING TEXT (NORMAL / UNSKEWED) --- */
@@ -264,47 +263,43 @@
             height: 100%;
             display: flex;
             align-items: center;
-            /* Shifted right to clear the Logo Holder position */
             padding-left: 50px; 
-            padding-right: 50px; /* Buffer so text doesn't cut off at the absolute right */
+            padding-right: 50px; 
             clip-path: inset(0% 100% 0% 0%);
             z-index: 1;
             overflow: hidden;
         }
 
+        /* JS handles the transform, we just set a baseline */
         .scrolling-text {
             color: #ffffff;
             font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
+            font-weight: 500;
             letter-spacing: 1.5px;
             white-space: nowrap;
-            /* SEAMLESS LOOP: Fixed cut-off bug */
             display: flex;
             padding-left: 30px;
-            overflow: hidden;
-            animation: scrollText 45s linear infinite;
-        }
-
-        @keyframes scrollText {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); } /* Seamless loop by moving half the container */
+            /* No CSS animation here. JS handles the transform seamlessly */
+            will-change: transform; 
         }
 
         /* --- TIME TAG (DATE) --- */
         .time-tag {
             position: absolute;
+            color: #0d0052;
             top: 0px; 
             right: 0px;
             height: 21px;
-            width: 90px; /* Slightly wider for dates */
+            padding: 0 18px;
+            min-width: 90px; /* Slightly wider for dates */
             background-color: #ffffff;
-            font-weight: bold;
+            font-weight: 900;
             transform: skewX(-32deg);
             border-radius: 6px;
             z-index: 20;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
             display: flex;
+            flex-grow: 1;
             align-items: center;
             justify-content: center;
             transform: skewX(-32deg) translateX(-850px);
@@ -312,9 +307,9 @@
         }
 
         .time-tag span {
-            color: #000;
-            font-size: 10px;
-            font-weight: 800;
+            color: #0d;
+            font-size: 15px;
+            font-weight: 900;
             letter-spacing: 1px;
             transform: skewX(32deg);
         }
@@ -418,7 +413,6 @@
         /* Pulsing Halo */
         @keyframes pulseHalo {
             0% { transform: scale(0.5); opacity: 0; }
-            
             50% { opacity: 0.8; }
             75% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(0.5); opacity: 0; }
@@ -538,15 +532,12 @@
             <div class="bottom-bar-bg"></div> <!-- Blue Background -->
             
             <div class="scroll-wrapper">
-                <!-- The text is duplicated for the seamless loop -->
-                <div class="scrolling-text">
-                    Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update
-                    <span>Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update</span>
-                </div>
+                <!-- JS handles the content and transform -->
+                <div class="scrolling-text" id="scrollContainer"></div>
             </div>
             
             <div class="time-tag">
-                <span id="dateDisplay">24 July 2026</span>
+                <span id="dateDisplay">24 December 2026</span>
             </div>
         </div>
 
@@ -555,7 +546,68 @@
     <script>
         const lowerThird = document.getElementById('mainLowerThird');
         const dateDisplay = document.getElementById('dateDisplay');
+        const scrollContainer = document.getElementById('scrollContainer');
         let loopTimeout;
+        let animationId;
+        let scrollPos = 0;
+        let speed = 0.5; // Pixels per frame (Smooth scrolling speed)
+
+        // --- Define the text list to scroll ---
+        const scrollMessages = [
+            "For more information please contact Bishop Dr.JJ on 0700727435",
+            "repentandpreparetheway.org",
+            "City Mega Church Livestream",
+            "God Bless You",
+            "Thank you for watching"
+        ];
+
+        // --- Join them perfectly with a tiny space-dot-space ---
+        // This ensures NO double dots.
+        const textContent = scrollMessages.join(' • ');
+
+        // --- Setup the Seamless Loop ---
+        function setupSeamlessScroll() {
+            // 1. Create the single string
+            const textWithSpacing = textContent + ' • ' + textContent;
+            scrollContainer.textContent = textWithSpacing;
+
+            // 2. Wait for DOM to render, then measure width and start
+            setTimeout(() => {
+                const textWidth = scrollContainer.scrollWidth / 2; // Half because we duplicated it
+                const containerWidth = scrollContainer.parentElement.clientWidth;
+
+                // If the text is shorter than the container, we might need to repeat more.
+                // But for standard news tickers, the duplicate is usually enough.
+                // Reset position
+                scrollPos = 0;
+                
+                // Kill any existing animation loop
+                if (animationId) cancelAnimationFrame(animationId);
+                
+                // Start the seamless loop
+                function animateScroll() {
+                    scrollPos -= speed;
+                    
+                    // When we have scrolled exactly 50% of the text, reset instantly without a jump
+                    if (Math.abs(scrollPos) >= textWidth) {
+                        scrollPos = 0;
+                    }
+                    
+                    scrollContainer.style.transform = `translateX(${scrollPos}px)`;
+                    animationId = requestAnimationFrame(animateScroll);
+                }
+                
+                animateScroll();
+            }, 50);
+        }
+
+        // --- Pause Scroll (for Outro/Fade) ---
+        function pauseScroll() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
 
         // --- Update Date Function ---
         function updateDate() {
@@ -570,12 +622,18 @@
             lowerThird.classList.remove('outro');
             lowerThird.classList.add('active');
 
-            // 2. Wait 10 seconds, then trigger Outro
+            // 2. Setup the scroll with delay so CSS transition finishes
+            setTimeout(() => {
+                setupSeamlessScroll();
+            }, 400);
+
+            // 3. Wait 30 seconds, then trigger Outro
             loopTimeout = setTimeout(() => {
                 lowerThird.classList.remove('active');
                 lowerThird.classList.add('outro');
+                pauseScroll();
 
-                // 3. Wait for outro to finish (approx 1.5s), then pause 2s, then loop
+                // 4. Wait for outro to finish (approx 1.5s), then pause 2s, then loop
                 setTimeout(() => {
                     // Reset the classes completely
                     lowerThird.classList.remove('active', 'outro');
@@ -591,7 +649,7 @@
                         startLoop();
                     }, 2000); // 2 Second Break
                 }, 1500); // Outro duration buffer
-            }, 30000); // 10 Second Display
+            }, 60000); // 30 Second Display
         }
 
         // Start the infinite loop immediately
