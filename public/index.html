@@ -92,6 +92,27 @@
             object-fit: cover;
         }
 
+        /* --- PULSING HALO ON LOGO --- */
+        .logo-holder::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            z-index: -1;
+            transform: scale(0);
+            opacity: 0;
+            pointer-events: none;
+            transition: none;
+        }
+        
+        .lower-third-module.active .logo-holder::before {
+            animation: pulseHalo 6s ease-in-out infinite 0.8s forwards;
+        }
+
         /* --- ORIGINAL LEFT YELLOW SLASH (RETAINED YELLOW) --- */
         .orange-bg {
             position: absolute;
@@ -167,6 +188,33 @@
             display: flex;
             align-items: center;
             overflow: hidden;
+            position: relative; /* Required for the sweep overlay */
+        }
+
+        /* --- LIGHT SWEEP ANIMATION ON THE WHITE BAR --- */
+        .main-banner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(20, 20, 255, 0.1),
+                rgba(20, 20, 255, 0.3),
+                rgba(20, 20, 255, 0.1),
+                transparent
+            );
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .lower-third-module.active .main-banner::after {
+            opacity: 1;
+            animation: lightSweep 25s ease-in-out infinite 0.6s;
         }
 
         .main-banner h1 {
@@ -228,20 +276,19 @@
             color: #ffffff;
             font-size: 11px;
             font-weight: 700;
-            text-transformm: uppercase;
+            text-transform: uppercase;
             letter-spacing: 1.5px;
             white-space: nowrap;
-            /* SEAMLESS LOOP: Uses double content translated by -50% */
-            animation: scrollText 55s linear infinite;
+            /* SEAMLESS LOOP: Fixed cut-off bug */
             display: flex;
-            overflow: hidden;
             padding-left: 30px;
-            gap: 40px; /* Gap between the duplicated text */
+            overflow: hidden;
+            animation: scrollText 45s linear infinite;
         }
 
         @keyframes scrollText {
             0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); } /* Moves exactly half the width (the duplicate) */
+            100% { transform: translateX(-50%); } /* Seamless loop by moving half the container */
         }
 
         /* --- TIME TAG (DATE) --- */
@@ -366,6 +413,21 @@
         @keyframes shrinkInPlace {
             0% { transform: scale(1); opacity: 1; }
             100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* Pulsing Halo */
+        @keyframes pulseHalo {
+            0% { transform: scale(0.5); opacity: 0; }
+            
+            50% { opacity: 0.8; }
+            75% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(0.5); opacity: 0; }
+        }
+
+        /* Light Sweep */
+        @keyframes lightSweep {
+            0% { left: -40%; }
+            100% { left: 140%; }
         }
 
         /* Yellow Slash */
@@ -529,7 +591,7 @@
                         startLoop();
                     }, 2000); // 2 Second Break
                 }, 1500); // Outro duration buffer
-            }, 10000); // 10 Second Display
+            }, 30000); // 10 Second Display
         }
 
         // Start the infinite loop immediately
