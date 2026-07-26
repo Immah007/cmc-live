@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,12 +52,12 @@
             pointer-events: none;
         }
 
-        /* 2. BOTTOM TRACK HOLDER */
+        /* 2. BOTTOM TRACK HOLDER (Shortened to start further right) */
         .bottom-track-holder {
             position: absolute;
             top: 70px;
-            left: 65px;
-            width: 770px;
+            left: 125px; /* Shifted right so it doesn't go to extreme left */
+            width: 710px; /* Reduced width */
             height: 25px;
             z-index: 5;
             pointer-events: none;
@@ -83,20 +82,23 @@
             justify-content: center;
             transform: scale(0);
             opacity: 0;
+            overflow: hidden;
         }
     
         .logo{
             width: 100%;
             height: 100%;
+            object-fit: cover;
         }
-        /* --- ORIGINAL LEFT YELLOW SLASH --- */
+
+        /* --- ORIGINAL LEFT YELLOW SLASH (RETAINED YELLOW) --- */
         .orange-bg {
             position: absolute;
             top: 20px;
             left: 0px;
             width: 100px;
             height: 45px;
-            background-color: #fbad18;
+            background-color: #fbad18; /* YELLOW */
             transform: skewX(-32deg);
             border-radius: 6px; 
             z-index: 5;
@@ -105,11 +107,11 @@
             opacity: 0;
         }
 
-        /* --- OVERLAPPING TOP PARALLELOGRAM (TITLE) --- */
+        /* --- OVERLAPPING TOP PARALLELOGRAM (TITLE) (TURNED BLUE) --- */
         .title-bar-wrapper {
             position: absolute;
             top: 5px; 
-            left: 150px; 
+            left: 175px; /* Shifted +25px right */
             width: 300px; 
             height: 22px;
             transform: skewX(-32deg);
@@ -122,7 +124,7 @@
         .title-bar {
             width: 100%;
             height: 100%;
-            background-color: #fbad18;
+            background-color: #1a2b61; /* DEEP ROYAL BLUE */
             border-radius: 6px;
             display: flex;
             align-items: center;
@@ -179,13 +181,13 @@
             opacity: 0;
         }
 
-        /* --- BOTTOM ORANGE BAR --- */
+        /* --- BOTTOM ORANGE BAR (TURNED BLUE) --- */
         .bottom-bar-bg {
             position: absolute;
             top: 0; left: 0;
             width: 100%;
             height: 100%;
-            background-color: #fbad18;
+            background-color: #1a2b61; /* DEEP ROYAL BLUE */
             transform: skewX(-32deg);
             border-radius: 6px;
             z-index: 0;
@@ -203,9 +205,10 @@
             align-items: center;
             /* Shifted right to clear the Logo Holder position */
             padding-left: 50px; 
-            padding-right: 90px;
+            padding-right: 50px; /* Buffer so text doesn't cut off at the absolute right */
             clip-path: inset(0% 100% 0% 0%);
             z-index: 1;
+            overflow: hidden;
         }
 
         .scrolling-text {
@@ -215,22 +218,24 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
             white-space: nowrap;
-            /* REMOVED THE SKEW! This is now normal text */
+            /* SEAMLESS LOOP: Uses double content translated by -50% */
             animation: scrollText 12s linear infinite;
+            display: flex;
+            gap: 40px; /* Gap between the duplicated text */
         }
 
         @keyframes scrollText {
             0% { transform: translateX(0%); }
-            100% { transform: translateX(-100%); }
+            100% { transform: translateX(-50%); } /* Moves exactly half the width (the duplicate) */
         }
 
-        /* --- TIME TAG --- */
+        /* --- TIME TAG (DATE) --- */
         .time-tag {
             position: absolute;
             top: 2px; 
             right: 0px;
             height: 21px;
-            width: 80px;
+            width: 90px; /* Slightly wider for dates */
             background-color: #ffffff;
             transform: skewX(-32deg);
             border-radius: 6px;
@@ -429,14 +434,14 @@
         <!-- LOGO HOLDER -->
         <div class="logo-holder">
             <div class="logo-circle">
-                <img class="logo" src="/images/ministry-logo.png">
+                <img class="logo" src="/images/ministry-logo.png" alt="Logo">
             </div>
         </div>
 
         <!-- Original Yellow Slash -->
         <div class="orange-bg"></div>
 
-        <!-- Top Overlapping Parallelogram -->
+        <!-- Top Overlapping Parallelogram (Blue) -->
         <div class="title-bar-wrapper">
             <div class="title-bar">
                 <h2>CITY MEGA CHURCH</h2>
@@ -452,14 +457,18 @@
 
         <!-- BOTTOM TRACK HOLDER -->
         <div class="bottom-track-holder">
-            <div class="bottom-bar-bg"></div>
+            <div class="bottom-bar-bg"></div> <!-- Blue Background -->
+            
             <div class="scroll-wrapper">
+                <!-- The text is duplicated for the seamless loop -->
                 <div class="scrolling-text">
-                    Breaking News • Live Update • Breaking News • Live Update
+                    Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update
+                    <span>Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update • Breaking News • Live Update</span>
                 </div>
             </div>
+            
             <div class="time-tag">
-                <span>08:45 AM</span>
+                <span id="dateDisplay">24 July 2026</span>
             </div>
         </div>
 
@@ -467,7 +476,16 @@
 
     <script>
         const lowerThird = document.getElementById('mainLowerThird');
+        const dateDisplay = document.getElementById('dateDisplay');
         let loopTimeout;
+
+        // --- Update Date Function ---
+        function updateDate() {
+            const now = new Date();
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            dateDisplay.textContent = now.toLocaleDateString('en-GB', options);
+        }
+        updateDate(); // Run on load
 
         function startLoop() {
             // 1. Trigger Intro
@@ -485,6 +503,9 @@
                     lowerThird.classList.remove('active', 'outro');
                     // Ensure it's fully hidden
                     lowerThird.style.opacity = '0';
+                    
+                    // Update date again before the next loop
+                    updateDate();
                     
                     // Wait 2 seconds, then restart
                     setTimeout(() => {
