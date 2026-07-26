@@ -43,7 +43,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            top: 35%;
+            top: 40%;
             left: 60px;
             width: 100px;
             height: 100px;
@@ -56,9 +56,10 @@
         .bottom-track-holder {
             position: absolute;
             top: 70px;
-            left: 125px; /* Shifted right so it doesn't go to extreme left */
-            width: 710px; /* Reduced width */
-            height: 25px;
+            left: 250px; /* Shifted right so it doesn't go to extreme left */
+            width: 500px; /* Reduced width */
+            height: 20px;
+            background: #9996ff;
             z-index: 5;
             pointer-events: none;
         }
@@ -73,7 +74,7 @@
             top: 0; left: 0;
             width: 100%;
             height: 100%;
-            background-color: #fbad18;
+            background-color: white; 
             border-radius: 50%;
             border: 2px solid #ffffff;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -112,8 +113,8 @@
             position: absolute;
             top: 5px; 
             left: 175px; /* Shifted +25px right */
-            width: 300px; 
-            height: 22px;
+            width: 250px; 
+            height: 25px;
             transform: skewX(-32deg);
             border-radius: 6px;
             z-index: 11;
@@ -124,7 +125,7 @@
         .title-bar {
             width: 100%;
             height: 100%;
-            background-color: #1a2b61; /* DEEP ROYAL BLUE */
+            background-color: #0d0052; /* DEEP ROYAL BLUE */
             border-radius: 6px;
             display: flex;
             align-items: center;
@@ -134,9 +135,8 @@
 
         .title-bar h2 {
             color: #ffffff;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
+            font-size: 16px;
+            font-weight: 700;;
             letter-spacing: 1px;
             padding-left: 20px;
             transform: skewX(32deg);
@@ -149,7 +149,7 @@
             position: absolute;
             top: 20px;
             left: 40px;
-            width: 850px;
+            width: 700px;
             height: 45px;
             transform: skewX(-32deg);
             border-radius: 6px;
@@ -187,12 +187,25 @@
             top: 0; left: 0;
             width: 100%;
             height: 100%;
-            background-color: #1a2b61; /* DEEP ROYAL BLUE */
+            background-color: black; /*#1a2b61; /* DEEP ROYAL BLUE */
             transform: skewX(-32deg);
             border-radius: 6px;
             z-index: 0;
+            padding-left: 20px;
             transform: skewX(-32deg) translateX(-350px);
             opacity: 0;
+        }
+        .bottom-bar-bg::before{
+            position: absolute;
+            content: '';
+            top: 0;
+            left: -30;
+            border-radius: 6px;
+            width: 60px;
+            height: 20px;
+            transform: skewX(-3deg);
+            background: black;
+            
         }
 
         /* --- SCROLLING TEXT (NORMAL / UNSKEWED) --- */
@@ -215,12 +228,14 @@
             color: #ffffff;
             font-size: 11px;
             font-weight: 700;
-            text-transform: uppercase;
+            text-transformm: uppercase;
             letter-spacing: 1.5px;
             white-space: nowrap;
             /* SEAMLESS LOOP: Uses double content translated by -50% */
-            animation: scrollText 12s linear infinite;
+            animation: scrollText 55s linear infinite;
             display: flex;
+            overflow: hidden;
+            padding-left: 30px;
             gap: 40px; /* Gap between the duplicated text */
         }
 
@@ -232,11 +247,12 @@
         /* --- TIME TAG (DATE) --- */
         .time-tag {
             position: absolute;
-            top: 2px; 
+            top: 0px; 
             right: 0px;
             height: 21px;
             width: 90px; /* Slightly wider for dates */
             background-color: #ffffff;
+            font-weight: bold;
             transform: skewX(-32deg);
             border-radius: 6px;
             z-index: 20;
@@ -444,14 +460,14 @@
         <!-- Top Overlapping Parallelogram (Blue) -->
         <div class="title-bar-wrapper">
             <div class="title-bar">
-                <h2>CITY MEGA CHURCH</h2>
+                <h2>Repentance & Holiness</h2>
             </div>
         </div>
 
         <!-- Main White Banner -->
         <div class="main-banner-wrapper">
             <div class="main-banner">
-                <h1>SUNDAY SERVICE LIVESTREAM</h1>
+                <h1>CITY MEGA CHURCH SUNDAY SERVICE</h1>
             </div>
         </div>
 
