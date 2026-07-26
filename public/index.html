@@ -1,1 +1,504 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modular Broadcast - Endless Loop</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #3b4852; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden;
+        }
+
+        /* === THE STATIC CANVAS WRAPPER === */
+        .lower-third-module {
+            position: relative;
+            width: 920px;
+            height: 110px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease-in;
+        }
+
+        /* =========================================================== */
+        /* === STATIC HOLDING CONTAINERS === */
+        /* =========================================================== */
+
+        /* 1. LOGO HOLDER */
+        .logo-holder {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: 35%;
+            left: 60px;
+            width: 100px;
+            height: 100px;
+            transform: translateY(-50%);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        /* 2. BOTTOM TRACK HOLDER */
+        .bottom-track-holder {
+            position: absolute;
+            top: 70px;
+            left: 65px;
+            width: 770px;
+            height: 25px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* =========================================================== */
+        /* === DYNAMIC ELEMENTS === */
+        /* =========================================================== */
+
+        /* --- LOGO --- */
+        .logo-circle {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fbad18;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: scale(0);
+            opacity: 0;
+        }
+        
+        .logo-circle::after {
+            content: 'LOGO';
+            color: #000;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        /* --- ORIGINAL LEFT YELLOW SLASH --- */
+        .orange-bg {
+            position: absolute;
+            top: 20px;
+            left: 0px;
+            width: 100px;
+            height: 45px;
+            background-color: #fbad18;
+            transform: skewX(-32deg);
+            border-radius: 6px; 
+            z-index: 5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: skewX(-32deg) translateX(600px) scale(0.8);
+            opacity: 0;
+        }
+
+        /* --- OVERLAPPING TOP PARALLELOGRAM (TITLE) --- */
+        .title-bar-wrapper {
+            position: absolute;
+            top: 5px; 
+            left: 150px; 
+            width: 300px; 
+            height: 22px;
+            transform: skewX(-32deg);
+            border-radius: 6px;
+            z-index: 11;
+            transform: skewX(-32deg) translateX(-300px);
+            opacity: 0;
+        }
+
+        .title-bar {
+            width: 100%;
+            height: 100%;
+            background-color: #fbad18;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .title-bar h2 {
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-left: 20px;
+            transform: skewX(32deg);
+            white-space: nowrap;
+            opacity: 0;
+        }
+
+        /* --- MAIN WHITE BANNER --- */
+        .main-banner-wrapper {
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            width: 850px;
+            height: 45px;
+            transform: skewX(-32deg);
+            border-radius: 6px;
+            z-index: 10;
+            transform: skewX(-32deg) translateX(-400px);
+            opacity: 0;
+        }
+
+        .main-banner {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .main-banner h1 {
+            color: #000000;
+            font-size: 22px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding-left: 140px; /* Pushed right due to logo holder */
+            transform: skewX(32deg);
+            white-space: nowrap;
+            opacity: 0;
+        }
+
+        /* --- BOTTOM ORANGE BAR --- */
+        .bottom-bar-bg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fbad18;
+            transform: skewX(-32deg);
+            border-radius: 6px;
+            z-index: 0;
+            transform: skewX(-32deg) translateX(-350px);
+            opacity: 0;
+        }
+
+        /* --- SCROLLING TEXT (NORMAL / UNSKEWED) --- */
+        .scroll-wrapper {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            /* Shifted right to clear the Logo Holder position */
+            padding-left: 50px; 
+            padding-right: 90px;
+            clip-path: inset(0% 100% 0% 0%);
+            z-index: 1;
+        }
+
+        .scrolling-text {
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            white-space: nowrap;
+            /* REMOVED THE SKEW! This is now normal text */
+            animation: scrollText 12s linear infinite;
+        }
+
+        @keyframes scrollText {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* --- TIME TAG --- */
+        .time-tag {
+            position: absolute;
+            top: 2px; 
+            right: 0px;
+            height: 21px;
+            width: 80px;
+            background-color: #ffffff;
+            transform: skewX(-32deg);
+            border-radius: 6px;
+            z-index: 20;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: skewX(-32deg) translateX(-850px);
+            opacity: 0;
+        }
+
+        .time-tag span {
+            color: #000;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            transform: skewX(32deg);
+        }
+
+        /* ============================================================ */
+        /* === ANIMATION STATES === */
+        /* ============================================================ */
+
+        .lower-third-module.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 1. Logo */
+        .lower-third-module.active .logo-circle {
+            animation: growInPlace 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.0s forwards;
+        }
+
+        /* 2. Yellow Slash */
+        .lower-third-module.active .orange-bg {
+            animation: zoomFromRight 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.0s forwards;
+        }
+
+        /* 3. Title Bar */
+        .lower-third-module.active .title-bar-wrapper {
+            animation: slideFromLeftTitle 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) 0.1s forwards;
+        }
+        .lower-third-module.active .title-bar h2 {
+            animation: fadeIn 0.4s ease-out 0.3s forwards;
+        }
+
+        /* 4. Main Banner */
+        .lower-third-module.active .main-banner-wrapper {
+            animation: slideFromLeft 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.15s forwards;
+        }
+        .lower-third-module.active .main-banner h1 {
+            animation: fadeIn 0.4s ease-out 0.55s forwards;
+        }
+
+        /* 5. Bottom Track */
+        .lower-third-module.active .bottom-bar-bg {
+            animation: slideFromLeftSub 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s forwards;
+        }
+
+        /* 6. Time Tag (Sweeps full width Right) & Mask Reveal */
+        .lower-third-module.active .time-tag {
+            animation: sweepRight 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.35s forwards;
+        }
+        .lower-third-module.active .scroll-wrapper {
+            animation: revealText 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.35s forwards;
+        }
+
+
+        /* --- OUTRO STATE --- */
+        .lower-third-module.outro {
+            transition: opacity 0.6s ease-in;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .lower-third-module.outro .main-banner h1 { animation: fadeOut 0.1s ease-in forwards; }
+        .lower-third-module.outro .title-bar h2 { animation: fadeOut 0.1s ease-in forwards; }
+
+        .lower-third-module.outro .time-tag {
+            animation: sweepLeft 0.7s cubic-bezier(0.5, 0, 0.5, 1) 0.05s forwards;
+        }
+        .lower-third-module.outro .scroll-wrapper {
+            animation: hideText 0.7s cubic-bezier(0.5, 0, 0.5, 1) 0.05s forwards;
+        }
+
+        .lower-third-module.outro .logo-circle {
+            animation: shrinkInPlace 0.5s cubic-bezier(0.5, 0, 0.5, 1) 0.15s forwards;
+        }
+
+        .lower-third-module.outro .bottom-bar-bg {
+            animation: slideOutLeftSub 0.5s ease-in 0.3s forwards;
+        }
+        .lower-third-module.outro .main-banner-wrapper {
+            animation: slideOutLeft 0.5s ease-in 0.4s forwards;
+        }
+        .lower-third-module.outro .title-bar-wrapper {
+            animation: slideOutLeftTitle 0.4s ease-in 0.45s forwards;
+        }
+        .lower-third-module.outro .orange-bg {
+            animation: zoomOutRight 0.5s ease-in 0.6s forwards;
+        }
+
+
+        /* --- KEYFRAMES --- */
+        
+        /* Logo */
+        @keyframes growInPlace {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shrinkInPlace {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* Yellow Slash */
+        @keyframes zoomFromRight {
+            0% { transform: skewX(-32deg) translateX(600px) scale(0.6); opacity: 0; }
+            100% { transform: skewX(-32deg) translateX(0) scale(1); opacity: 1; }
+        }
+        @keyframes zoomOutRight {
+            0% { transform: skewX(-32deg) translateX(0) scale(1); opacity: 1; }
+            100% { transform: skewX(-32deg) translateX(600px) scale(0.6); opacity: 0; }
+        }
+
+        /* Title Bar */
+        @keyframes slideFromLeftTitle {
+            0% { transform: skewX(-32deg) translateX(-300px); opacity: 0; }
+            100% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutLeftTitle {
+            0% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+            100% { transform: skewX(-32deg) translateX(-300px); opacity: 0; }
+        }
+
+        /* Main Banner */
+        @keyframes slideFromLeft {
+            0% { transform: skewX(-32deg) translateX(-400px); opacity: 0; }
+            100% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutLeft {
+            0% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+            100% { transform: skewX(-32deg) translateX(-400px); opacity: 0; }
+        }
+
+        /* Bottom Bar */
+        @keyframes slideFromLeftSub {
+            0% { transform: skewX(-32deg) translateX(-350px); opacity: 0; }
+            100% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutLeftSub {
+            0% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+            100% { transform: skewX(-32deg) translateX(-350px); opacity: 0; }
+        }
+
+        /* Time Tag Sweeps */
+        @keyframes sweepRight {
+            0% { transform: skewX(-32deg) translateX(-850px); opacity: 0; }
+            100% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+        }
+        @keyframes sweepLeft {
+            0% { transform: skewX(-32deg) translateX(0); opacity: 1; }
+            100% { transform: skewX(-32deg) translateX(-850px); opacity: 0; }
+        }
+
+        /* Mask Reveal */
+        @keyframes revealText {
+            0% { clip-path: inset(0% 100% 0% 0%); }
+            100% { clip-path: inset(0% 0% 0% 0%); }
+        }
+        @keyframes hideText {
+            0% { clip-path: inset(0% 0% 0% 0%); }
+            100% { clip-path: inset(0% 100% 0% 0%); }
+        }
+
+        /* Text Fades */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: skewX(32deg) translateY(5px); }
+            100% { opacity: 1; transform: skewX(32deg) translateY(0); }
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================== -->
+    <!-- MODULE 1: MAIN LOWER THIRD                                    -->
+    <!-- ============================================================== -->
+    <div class="lower-third-module" id="mainLowerThird">
+        
+        <!-- LOGO HOLDER -->
+        <div class="logo-holder">
+            <div class="logo-circle"></div>
+        </div>
+
+        <!-- Original Yellow Slash -->
+        <div class="orange-bg"></div>
+
+        <!-- Top Overlapping Parallelogram -->
+        <div class="title-bar-wrapper">
+            <div class="title-bar">
+                <h2>CITY MEGA CHURCH</h2>
+            </div>
+        </div>
+
+        <!-- Main White Banner -->
+        <div class="main-banner-wrapper">
+            <div class="main-banner">
+                <h1>SUNDAY SERVICE LIVESTREAM</h1>
+            </div>
+        </div>
+
+        <!-- BOTTOM TRACK HOLDER -->
+        <div class="bottom-track-holder">
+            <div class="bottom-bar-bg"></div>
+            <div class="scroll-wrapper">
+                <div class="scrolling-text">
+                    Breaking News • Live Update • Breaking News • Live Update
+                </div>
+            </div>
+            <div class="time-tag">
+                <span>08:45 AM</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const lowerThird = document.getElementById('mainLowerThird');
+        let loopTimeout;
+
+        function startLoop() {
+            // 1. Trigger Intro
+            lowerThird.classList.remove('outro');
+            lowerThird.classList.add('active');
+
+            // 2. Wait 10 seconds, then trigger Outro
+            loopTimeout = setTimeout(() => {
+                lowerThird.classList.remove('active');
+                lowerThird.classList.add('outro');
+
+                // 3. Wait for outro to finish (approx 1.5s), then pause 2s, then loop
+                setTimeout(() => {
+                    // Reset the classes completely
+                    lowerThird.classList.remove('active', 'outro');
+                    // Ensure it's fully hidden
+                    lowerThird.style.opacity = '0';
+                    
+                    // Wait 2 seconds, then restart
+                    setTimeout(() => {
+                        lowerThird.style.opacity = ''; // Reset inline style
+                        startLoop();
+                    }, 2000); // 2 Second Break
+                }, 1500); // Outro duration buffer
+            }, 10000); // 10 Second Display
+        }
+
+        // Start the infinite loop immediately
+        startLoop();
+    </script>
+</body>
+</html>
