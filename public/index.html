@@ -192,7 +192,7 @@
             position: relative; /* Required for the sweep overlay */
         }
 
-        /* --- THE IMAGE STREAK (MODIFIED TO ONLY PLAY ON INTRO/OUTRO) --- */
+        /* --- THE IMAGE STREAK --- */
         .main-banner-wrapper::before {
             content: '';
             position: absolute;
@@ -209,15 +209,15 @@
             background-repeat: no-repeat;
             z-index: 5000;
             pointer-events: none;
-            opacity: 1;
+            opacity: 0; /* Default Hidden */
         }
 
-        /* INTRO: Delayed 1.5s. Starts visible, goes 75% -> 5%, scales up to 3, then fades */
+        /* INTRO: 1.5s delay hidden, then 3.5s animation */
         .lower-third-module.active .main-banner-wrapper::before {
-            animation: streak-intro 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) 1.5s forwards;
+            animation: streak-intro 3.5s cubic-bezier(0.25, 0.8, 0.25, 1) 1.5s forwards;
         }
 
-        /* OUTRO: Immediate. Starts visible at 5%, goes 5% -> 75%, scales down to 0.5, stays visible */
+        /* OUTRO: No opacity handling. Relies on parent fade */
         .lower-third-module.outro .main-banner-wrapper::before {
             animation: streak-outro 1.2s cubic-bezier(0.5, 0, 0.5, 1) 0s forwards;
         }
@@ -455,18 +455,19 @@
             100% { left: 140%; }
         }
 
-        /* Streak Intro: Delayed, starts visible, ends with opacity 0 */
+        /* Streak Intro: Hidden during 1.5s delay, 3.5s total duration */
         @keyframes streak-intro {
-            0% { left: 75%; transform: scale(1); opacity: 1; }
+            0% { left: 75%; transform: scale(1); opacity: 0; }
+            5% { opacity: 1; } /* Becomes visible only when animation starts */
             60% { left: 5%; transform: scale(3); opacity: 1; }
             100% { left: 5%; transform: scale(3); opacity: 0; }
         }
 
-        /* Streak Outro: Immediate, starts visible, ends visible (shrinks glow) */
+        /* Streak Outro: Only movement, no opacity (relies on parent fade) */
         @keyframes streak-outro {
-            0% { left: 5%; transform: scale(3); opacity: 1; }
-            60% { left: 75%; transform: scale(1); opacity: 1; }
-            100% { left: 75%; transform: scale(0.5); opacity: 1; }
+            0% { left: 5%; transform: scale(3); }
+            60% { left: 75%; transform: scale(1); }
+            100% { left: 75%; transform: scale(0.5); }
         }
         
         /* Yellow Slash */
