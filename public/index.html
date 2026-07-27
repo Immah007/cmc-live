@@ -33,7 +33,7 @@
             width: 100%;
             max-width: 1000px;
             position: relative;
-            height: 160px;
+            /* No fixed height here - let content dictate */
             display: flex;
             justify-content: center;
             align-items: flex-end;
@@ -44,11 +44,13 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 100%;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.6s ease-in-out, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             transform: translateY(30px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
         }
 
         .broadcast-module.visible {
@@ -72,6 +74,7 @@
             display: flex;
             justify-content: center;
             align-items: flex-end;
+            width: 100%;
         }
 
         /* === THE STATIC CANVAS WRAPPER === */
@@ -444,23 +447,28 @@
 
 
         /* ============================================================== */
-        /* MODULE 2: SCRIPTURE VIEW (UNTOUCHED) */
+        /* MODULE 2: SCRIPTURE VIEW (UPDATED FOR FLEXIBILITY) */
         /* ============================================================== */
         .scripture-wrapper {
             font-family: 'Inter', sans-serif;
-            height: 160px;
+            /* Height removed. min-height is used for the card */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
         }
 
         .scripture-stage {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: relative;
+            width: 850px;
+            /* Matches width of Main Banner */
             display: flex;
             flex-direction: column;
             justify-content: center;
-            transform: translateY(50px);
+            /* Starting point for intro/outro */
+            transform: translateY(30px);
+            /* Ensure it centers horizontally */
+            margin: 0 auto;
         }
 
         .scripture-stage.box-intro {
@@ -468,7 +476,7 @@
             transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .scripture-stage.box-outro {
-            transform: translateY(50px) !important;
+            transform: translateY(30px) !important;
             transition: transform 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
         }
 
@@ -492,7 +500,12 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            height: 100%;
+            align-items: center;
+            text-align: center;
+            
+            /* FLEXIBLE HEIGHT CONFIGURATION */
+            min-height: 150px; /* Minimum base height (around your request) */
+            height: auto;      /* Expands to fit content */
             width: 100%;
         }
 
@@ -505,6 +518,7 @@
             letter-spacing: 2px;
             margin-bottom: 8px;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+            text-align: center;
         }
 
         .scripture-text {
@@ -516,6 +530,8 @@
             font-style: italic;
             text-shadow: 0 0 10px rgba(138, 43, 226, 0.8), 0 0 25px rgba(75, 0, 130, 0.6), 0 0 50px rgba(48, 25, 145, 0.4);
             -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+            text-align: center;
+            width: 100%;
         }
 
         .scripture-text .typewriter-letter {
@@ -523,14 +539,12 @@
         }
 
         @media (max-width: 768px) { 
-            .broadcast-wrapper { height: 130px; } 
-            .scripture-card { padding: 15px 25px; } 
+            .scripture-card { min-height: 110px; padding: 15px 25px; } 
             .scripture-ref { font-size: 18px; } 
             .scripture-text { font-size: 17px; } 
         }
         @media (max-width: 480px) { 
-            .broadcast-wrapper { height: 110px; } 
-            .scripture-card { padding: 10px 15px; } 
+            .scripture-card { min-height: 90px; padding: 10px 15px; } 
             .scripture-ref { font-size: 14px; } 
             .scripture-text { font-size: 13px; } 
         }
