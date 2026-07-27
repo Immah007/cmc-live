@@ -191,27 +191,37 @@
             align-items: center;
             position: relative; /* Required for the sweep overlay */
         }
-         .main-banner-wrapper::before {
+
+        /* --- THE IMAGE STREAK (MODIFIED TO ONLY PLAY ON INTRO/OUTRO) --- */
+        .main-banner-wrapper::before {
             content: '';
             position: absolute;
             transform: skewX(32deg);
             top: -40%;
-            left: 75%;
+            left: 75%; /* Base hidden position */
             width: 200px;
             height: 120px;
             transform: scale(1.6);
             transform-origin: center;
-            background: redd;
             background-image: url("/images/streak2.png");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             z-index: 5000;
             pointer-events: none;
-            opacity: 1;
-            animation: light-streak 4s linear infinite;
+            opacity: 0;
+            /* REMOVED THE INFINITE LOOP ANIMATION */
         }
 
+        /* INTRO: Moves from 75% to 5% */
+        .lower-third-module.active .main-banner-wrapper::before {
+            animation: streak-intro 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) 0.2s forwards;
+        }
+
+        /* OUTRO: Moves from 5% back to 75% */
+        .lower-third-module.outro .main-banner-wrapper::before {
+            animation: streak-outro 1s cubic-bezier(0.5, 0, 0.5, 1) 0.2s forwards;
+        }
 
         /* --- LIGHT SWEEP ANIMATION ON THE WHITE BAR --- */
         .main-banner::after {
@@ -445,13 +455,22 @@
             0% { left: -40%; }
             100% { left: 140%; }
         }
-@keyframes light-streak {
-            0% { left: 75%; transform: scale(0.5); opacity: 1; }
-           /* 25% { left: 75%; }*/
+
+        /* Streak Intro (75% down to 5%) - Plays Once */
+        @keyframes streak-intro {
+            0% { left: 75%; transform: scale(1.6); opacity: 0; }
+            20% { opacity: 1; }
             60% { left: 5%; transform: scale(2.5); opacity: 1; }
-            80% { left: 5%; transform: scale(5); opacity: 1; }
-            100% { left: 5%; transform: scale(2); opacity: 0;}
-}
+            100% { left: 5%; transform: scale(2); opacity: 0; }
+        }
+
+        /* Streak Outro (5% back up to 75%) - Plays Once on Outro */
+        @keyframes streak-outro {
+            0% { left: 5%; transform: scale(2); opacity: 0; }
+            20% { opacity: 0.5; }
+            80% { left: 75%; transform: scale(1.6); opacity: 0.5; }
+            100% { left: 75%; transform: scale(1.6); opacity: 0; }
+        }
         
         /* Yellow Slash */
         @keyframes zoomFromRight {
@@ -605,8 +624,6 @@
                 const textWidth = scrollContainer.scrollWidth / 2; // Half because we duplicated it
                 const containerWidth = scrollContainer.parentElement.clientWidth;
 
-                // If the text is shorter than the container, we might need to repeat more.
-                // But for standard news tickers, the duplicate is usually enough.
                 // Reset position
                 scrollPos = 0;
                 
@@ -656,7 +673,7 @@
                 setupSeamlessScroll();
             }, 400);
 
-            // 3. Wait 30 seconds, then trigger Outro
+            // 3. Wait 60 seconds, then trigger Outro
             loopTimeout = setTimeout(() => {
                 lowerThird.classList.remove('active');
                 lowerThird.classList.add('outro');
@@ -678,7 +695,7 @@
                         startLoop();
                     }, 2000); // 2 Second Break
                 }, 1500); // Outro duration buffer
-            }, 60000); // 30 Second Display
+            }, 60000); // 60 Second Display
         }
 
         // Start the infinite loop immediately
