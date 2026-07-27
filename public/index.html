@@ -201,7 +201,7 @@
             left: 75%; /* Base hidden position */
             width: 200px;
             height: 120px;
-            transform: scale(1.6);
+            transform: scale(1);
             transform-origin: center;
             background-image: url("/images/streak2.png");
             background-size: cover;
@@ -209,18 +209,17 @@
             background-repeat: no-repeat;
             z-index: 5000;
             pointer-events: none;
-            opacity: 0;
-            /* REMOVED THE INFINITE LOOP ANIMATION */
+            opacity: 1;
         }
 
-        /* INTRO: Moves from 75% to 5% */
+        /* INTRO: Delayed 1.5s. Starts visible, goes 75% -> 5%, scales up to 3, then fades */
         .lower-third-module.active .main-banner-wrapper::before {
-            animation: streak-intro 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) 0.2s forwards;
+            animation: streak-intro 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) 1.5s forwards;
         }
 
-        /* OUTRO: Moves from 5% back to 75% */
+        /* OUTRO: Immediate. Starts visible at 5%, goes 5% -> 75%, scales down to 0.5, stays visible */
         .lower-third-module.outro .main-banner-wrapper::before {
-            animation: streak-outro 1s cubic-bezier(0.5, 0, 0.5, 1) 0.2s forwards;
+            animation: streak-outro 1.2s cubic-bezier(0.5, 0, 0.5, 1) 0s forwards;
         }
 
         /* --- LIGHT SWEEP ANIMATION ON THE WHITE BAR --- */
@@ -456,20 +455,18 @@
             100% { left: 140%; }
         }
 
-        /* Streak Intro (75% down to 5%) - Plays Once */
+        /* Streak Intro: Delayed, starts visible, ends with opacity 0 */
         @keyframes streak-intro {
-            0% { left: 75%; transform: scale(1.6); opacity: 0; }
-            20% { opacity: 1; }
-            60% { left: 5%; transform: scale(2.5); opacity: 1; }
-            100% { left: 5%; transform: scale(2); opacity: 0; }
+            0% { left: 75%; transform: scale(1); opacity: 1; }
+            60% { left: 5%; transform: scale(3); opacity: 1; }
+            100% { left: 5%; transform: scale(3); opacity: 0; }
         }
 
-        /* Streak Outro (5% back up to 75%) - Plays Once on Outro */
+        /* Streak Outro: Immediate, starts visible, ends visible (shrinks glow) */
         @keyframes streak-outro {
-            0% { left: 5%; transform: scale(2); opacity: 0; }
-            20% { opacity: 0.5; }
-            80% { left: 75%; transform: scale(1.6); opacity: 0.5; }
-            100% { left: 75%; transform: scale(1.6); opacity: 0; }
+            0% { left: 5%; transform: scale(3); opacity: 1; }
+            60% { left: 75%; transform: scale(1); opacity: 1; }
+            100% { left: 75%; transform: scale(0.5); opacity: 1; }
         }
         
         /* Yellow Slash */
