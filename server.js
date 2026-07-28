@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const http = require('http');
 const socketIO = require('socket.io');
+const fs = require('fs');
 
 // Initialize the Express app
 const app = express();
@@ -19,13 +20,46 @@ const io = socketIO(server, {
 });
 
 // Serve static files from the 'public' directory
-// This automatically serves index.html when you visit the root URL
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Also serve root files for controller.html
 app.use(express.static(__dirname));
 
-// Optional: Explicitly handle the root route (though express.static handles it)
+// Load Bible data
+let bibleData = null;
+try {
+    const biblePath = path.join(__dirname, 'public', 'bibles', 'kjv.json');
+    const bibleRaw = fs.readFileSync(biblePath, 'utf8');
+    bibleData = JSON.parse(bibleRaw);
+    console.log('📖 Bible data loaded successfully');
+} catch (error) {
+    console.error('❌ Error loading Bible data:', error.message);
+}
+
+// API endpoint to get Bible data
+app.get('/api/bible', (req, res) => {
+    if (bibleData) {
+        res.json(bibleData);
+    } else {
+        res.status(500).json({ error: 'Bible data not available' });
+    }
+});
+
+// API endpoint to get specific book
+app.get('/api/bible/:bookId', (req, res) => {
+    if (!bibleData) {
+        return res.status(500).json({ error: 'Bible data not available' });
+    }
+    
+    const book = bibleData.books.find(b => b.bookId === parseInt(req.params.bookId));
+    if (book) {
+        res.json(book);
+    } else {
+        res.status(404).json({ error: 'Book not found' });
+    }
+});
+
+// Optional: Handle root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -36,10 +70,9 @@ app.get('/controller', (req, res) => {
 });
 
 // ========== SOCKET.IO LOGIC ==========
-// Store current state
 let currentState = {
     lowerThird: {
-        visible: false,
+        visible: true, // Start visible by default
         heading: 'Repentance & Holiness',
         headline: 'CITY MEGA CHURCH SUNDAY SERVICE',
         scrollMessages: [
@@ -55,7 +88,8 @@ let currentState = {
     },
     speaker: {
         visible: false
-    }
+    },
+    lowerThirdToggleState: true // Track if user wants lower third visible
 };
 
 io.on('connection', (socket) => {
@@ -74,20 +108,29 @@ io.on('connection', (socket) => {
             scrollMessages: data.scrollMessages,
             visible: true
         };
-        // Broadcast to all clients (including sender)
+        currentState.lowerThirdToggleState = true;
         io.emit('updateLowerThird', data);
     });
 
     socket.on('hideLowerThird', () => {
         console.log('📺 Hide Lower Third');
         currentState.lowerThird.visible = false;
+        currentState.lowerThirdToggleState = false;
         io.emit('hideLowerThird');
+    });
+
+    socket.on('showLowerThird', () => {
+        console.log('📺 Show Lower Third');
+        currentState.lowerThird.visible = true;
+        currentState.lowerThirdToggleState = true;
+        io.emit('showLowerThird');
     });
 
     // ========== SCRIPTURE CONTROLS ==========
     socket.on('showScripture', (data) => {
         console.log('📖 Show Scripture:', data);
         currentState.scripture.visible = true;
+        currentState.lowerThird.visible = false; // Hide lower third when scripture shows
         io.emit('showScripture', data);
     });
 
@@ -95,12 +138,19 @@ io.on('connection', (socket) => {
         console.log('📖 Hide Scripture');
         currentState.scripture.visible = false;
         io.emit('hideScripture');
+        
+        // If lower third toggle is on, show it back
+        if (currentState.lowerThirdToggleState) {
+            currentState.lowerThird.visible = true;
+            io.emit('showLowerThird');
+        }
     });
 
     // ========== SPEAKER CONTROLS ==========
     socket.on('showSpeaker', (data) => {
         console.log('🎤 Show Speaker:', data);
         currentState.speaker.visible = true;
+        currentState.lowerThird.visible = false; // Hide lower third when speaker shows
         io.emit('showSpeaker', data);
     });
 
@@ -113,8 +163,13 @@ io.on('connection', (socket) => {
     socket.on('speakerAutoHidden', () => {
         console.log('🎤 Speaker auto-hidden (5s timeout)');
         currentState.speaker.visible = false;
-        // Notify control panel to update button state
         socket.broadcast.emit('speakerAutoHidden');
+        
+        // If lower third toggle is on, show it back
+        if (currentState.lowerThirdToggleState && !currentState.scripture.visible) {
+            currentState.lowerThird.visible = true;
+            io.emit('showLowerThird');
+        }
     });
 
     socket.on('disconnect', () => {
