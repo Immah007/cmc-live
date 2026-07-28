@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Broadcast System • Three Lower Thirds Loop</title>
+  <title>Broadcast System • Live Controlled Lower Thirds</title>
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
   
   <!-- Fonts for Lower Third -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -65,7 +66,7 @@
     }
 
     /* ============================================================== */
-    /* MODULE 1: LOWER THIRD (ORIGINAL – ABSOLUTELY NO POSITION CHANGES) */
+    /* MODULE 1: LOWER THIRD (ORIGINAL DESIGN) */
     /* ============================================================== */
     .lower-third-wrapper {
       font-family: 'Poppins', sans-serif;
@@ -257,7 +258,7 @@
       opacity: 0;
     }
 
-    /* MAIN BANNER TEXT - RESTORED EXACT ORIGINAL STYLE */
+    /* MAIN BANNER TEXT */
     .main-banner h1 {
       color: #000000;
       font-size: 22px;
@@ -270,7 +271,6 @@
       opacity: 0;
     }
 
-    /* Typewriter letters for main banner */
     .main-banner .typewriter-letter {
       display: inline-block;
       opacity: 0;
@@ -418,7 +418,7 @@
     @keyframes fadeIn { 0% { opacity: 0; transform: skewX(32deg) translateY(5px); } 100% { opacity: 1; transform: skewX(32deg) translateY(0); } }
 
     /* ============================================================== */
-    /* MODULE 2: SCRIPTURE VIEW (ELEMENT CENTERED, TEXT LEFT-ALIGNED) */
+    /* MODULE 2: SCRIPTURE VIEW */
     /* ============================================================== */
     .scripture-wrapper {
       font-family: 'Inter', sans-serif;
@@ -453,10 +453,6 @@
       transition: opacity 0.1s ease-out;
     }
     .typewriter-letter.visible { opacity: 1 !important; }
-    .scripture-stage.text-fade-out .typewriter-letter {
-      opacity: 0 !important;
-      transition: opacity 0.4s ease-in !important;
-    }
 
     .scripture-card {
       background: rgba(0, 0, 0, 0.85);
@@ -493,17 +489,12 @@
       line-height: 1.5;
       font-style: italic;
       text-shadow: 0 0 10px rgba(138, 43, 226, 0.8), 0 0 25px rgba(75, 0, 130, 0.6), 0 0 50px rgba(48, 25, 145, 0.4);
-      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
       text-align: left;
       width: 100%;
     }
 
-    .scripture-text .typewriter-letter {
-      text-shadow: 0 0 12px rgba(0, 0, 205, 0.9), 0 0 25px rgba(138, 43, 226, 0.8), 0 0 45px rgba(148, 0, 211, 0.5), 0 0 80px rgba(25, 0, 90, 0.3);
-    }
-
     /* ============================================================== */
-    /* MODULE 3: SPEAKER LOWER THIRD (SHORTER, MATCHES MAIN DESIGN) */
+    /* MODULE 3: SPEAKER LOWER THIRD */
     /* ============================================================== */
     .speaker-wrapper {
       font-family: 'Poppins', sans-serif;
@@ -516,7 +507,7 @@
 
     .speaker-module {
       position: relative;
-      width: 450px;
+      width: 750px;
       height: 80px;
       transition: opacity 0.4s ease-in;
     }
@@ -626,24 +617,13 @@
       0% { opacity: 0; transform: skewX(32deg) translateY(5px); }
       100% { opacity: 1; transform: skewX(32deg) translateY(0); }
     }
-
-    @media (max-width: 768px) {
-      .scripture-card { min-height: 110px; padding: 15px 25px; }
-      .scripture-ref { font-size: 18px; }
-      .scripture-text { font-size: 17px; }
-    }
-    @media (max-width: 480px) {
-      .scripture-card { min-height: 90px; padding: 10px 15px; }
-      .scripture-ref { font-size: 14px; }
-      .scripture-text { font-size: 13px; }
-    }
   </style>
 </head>
 <body>
 
 <div class="broadcast-wrapper">
   
-  <!-- MODULE 1: LOWER THIRD (ORIGINAL) -->
+  <!-- MODULE 1: LOWER THIRD -->
   <div class="broadcast-module lower-third-wrapper" id="lowerThirdContainer">
     <div class="lower-third-module" id="mainLowerThird">
       <div class="logo-holder">
@@ -654,7 +634,7 @@
       <div class="orange-bg"></div>
       <div class="title-bar-wrapper">
         <div class="title-bar">
-          <h2>Repentance & Holiness</h2>
+          <h2 id="ltHeading">Repentance & Holiness</h2>
         </div>
       </div>
       <div class="main-banner-wrapper">
@@ -678,8 +658,8 @@
   <div class="broadcast-module scripture-wrapper" id="scriptureContainer">
     <div class="scripture-stage" id="scriptureStage">
       <div class="scripture-card">
-        <div class="scripture-ref" id="scriptureRef">Loading...</div>
-        <div class="scripture-text" id="scriptureText">Loading...</div>
+        <div class="scripture-ref" id="scriptureRef">John 3:16</div>
+        <div class="scripture-text" id="scriptureText"></div>
       </div>
     </div>
   </div>
@@ -690,12 +670,12 @@
       <div class="speaker-orange-bg"></div>
       <div class="speaker-role-wrapper">
         <div class="speaker-role-bar">
-          <span>NOW MINISTERING</span>
+          <span id="speakerRoleText">NOW MINISTERING</span>
         </div>
       </div>
       <div class="speaker-name-wrapper">
         <div class="speaker-name-banner">
-          <span>Bishop Jason</span>
+          <span id="speakerNameText">Bishop Jason</span>
         </div>
       </div>
     </div>
@@ -705,46 +685,63 @@
 
 <script>
   (function() {
-    // ---------- DOM ELEMENTS ----------
+    // ========== SOCKET.IO CONNECTION ==========
+    const socket = io('http://localhost:3000');
+
+    // ========== DOM ELEMENTS ==========
     const lowerThirdContainer = document.getElementById('lowerThirdContainer');
     const lowerThirdModule = document.getElementById('mainLowerThird');
+    const ltHeading = document.getElementById('ltHeading');
     const mainBannerText = document.getElementById('mainBannerText');
     const dateDisplay = document.getElementById('dateDisplay');
     const scrollContainer = document.getElementById('scrollContainer');
 
     const scriptureContainer = document.getElementById('scriptureContainer');
     const scriptureStage = document.getElementById('scriptureStage');
-    const refEl = document.getElementById('scriptureRef');
-    const textEl = document.getElementById('scriptureText');
+    const scriptureRef = document.getElementById('scriptureRef');
+    const scriptureText = document.getElementById('scriptureText');
 
     const speakerContainer = document.getElementById('speakerContainer');
     const speakerModule = document.getElementById('speakerModule');
+    const speakerRoleText = document.getElementById('speakerRoleText');
+    const speakerNameText = document.getElementById('speakerNameText');
 
-    // ---------- DATA ----------
-    const scrollMessages = [
-      "For more information please contact Bishop Dr.JJ on 0700727435",
-      "repentandpreparetheway.org",
-      "City Mega Church Livestream",
-      "God Bless You",
-      "Thank you for watching"
-    ];
-    const textContent = scrollMessages.join(' • ');
-
-    const verses = [
-      { ref: "John 3:15", text: "That whoever believes in him may have eternal life." },
-      { ref: "John 3:16", text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
-      { ref: "John 3:17", text: "For God did not send his Son into the world to condemn the world, but to save the world through him." }
-    ];
-
-    // ---------- VARIABLES ----------
+    // ========== VARIABLES ==========
     let ltAnimationId = null;
     let ltScrollPos = 0;
     const ltSpeed = 0.5;
     let letterInterval = null;
-    let stTimeoutId = null;
-    let stTypeInterval = null;
+    let speakerTimeout = null;
 
-    // ========== TYPEWRITER FOR MAIN BANNER ==========
+    // ========== UTILITY FUNCTIONS ==========
+    function updateDate() {
+      const now = new Date();
+      const options = { day: 'numeric', month: 'long', year: 'numeric' };
+      dateDisplay.textContent = now.toLocaleDateString('en-GB', options);
+    }
+
+    function setupSeamlessScroll(messages) {
+      const textContent = messages.join(' • ');
+      const textWithSpacing = textContent + ' • ' + textContent;
+      scrollContainer.textContent = textWithSpacing;
+      setTimeout(() => {
+        const textWidth = scrollContainer.scrollWidth / 2;
+        if (ltAnimationId) cancelAnimationFrame(ltAnimationId);
+        ltScrollPos = 0;
+        function animateScroll() {
+          ltScrollPos -= ltSpeed;
+          if (Math.abs(ltScrollPos) >= textWidth) ltScrollPos = 0;
+          scrollContainer.style.transform = `translateX(${ltScrollPos}px)`;
+          ltAnimationId = requestAnimationFrame(animateScroll);
+        }
+        animateScroll();
+      }, 50);
+    }
+
+    function pauseScroll() {
+      if (ltAnimationId) { cancelAnimationFrame(ltAnimationId); ltAnimationId = null; }
+    }
+
     function setupBannerText(element, text) {
       element.innerHTML = '';
       for (let i = 0; i < text.length; i++) {
@@ -776,198 +773,193 @@
       element.innerHTML = '';
     }
 
-    // ========== LOWER THIRD FUNCTIONS ==========
-    function updateDate() {
-      const now = new Date();
-      const options = { day: 'numeric', month: 'long', year: 'numeric' };
-      dateDisplay.textContent = now.toLocaleDateString('en-GB', options);
-    }
-
-    function setupSeamlessScroll() {
-      const textWithSpacing = textContent + ' • ' + textContent;
-      scrollContainer.textContent = textWithSpacing;
-      setTimeout(() => {
-        const textWidth = scrollContainer.scrollWidth / 2;
-        if (ltAnimationId) cancelAnimationFrame(ltAnimationId);
-        ltScrollPos = 0;
-        function animateScroll() {
-          ltScrollPos -= ltSpeed;
-          if (Math.abs(ltScrollPos) >= textWidth) ltScrollPos = 0;
-          scrollContainer.style.transform = `translateX(${ltScrollPos}px)`;
-          ltAnimationId = requestAnimationFrame(animateScroll);
-        }
-        animateScroll();
-      }, 50);
-    }
-
-    function pauseScroll() {
-      if (ltAnimationId) { cancelAnimationFrame(ltAnimationId); ltAnimationId = null; }
-    }
-
-    function showLowerThird() {
-      lowerThirdContainer.classList.add('visible');
-      lowerThirdContainer.classList.remove('hidden');
-      lowerThirdModule.classList.remove('outro');
-      lowerThirdModule.classList.add('active');
-      
-      // Typewriter animation for main banner text
-      typeBannerText(mainBannerText, 'CITY MEGA CHURCH SUNDAY SERVICE', () => {
-        // Typing complete
-      });
-
-      setTimeout(() => { setupSeamlessScroll(); }, 400);
-
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          lowerThirdModule.classList.remove('active');
-          lowerThirdModule.classList.add('outro');
-          pauseScroll();
-          clearBannerText(mainBannerText);
-
-          setTimeout(() => {
-            lowerThirdContainer.classList.remove('visible');
-            lowerThirdContainer.classList.add('hidden');
-            lowerThirdModule.classList.remove('active', 'outro');
-            resolve();
-          }, 1500);
-        }, 30000);
-      });
-    }
-
-    // ========== SCRIPTURE FUNCTIONS ==========
-    function setupText(element, textContent) {
+    function setupScriptureText(element, text) {
       element.innerHTML = '';
-      for (let i = 0; i < textContent.length; i++) {
+      for (let i = 0; i < text.length; i++) {
         const span = document.createElement('span');
         span.className = 'typewriter-letter';
-        span.textContent = textContent[i] === ' ' ? '\u00A0' : textContent[i];
+        span.textContent = text[i] === ' ' ? '\u00A0' : text[i];
         element.appendChild(span);
       }
     }
 
-    function typeText(element, textContent, callback) {
-      setupText(element, textContent);
+    function typeScriptureText(element, text, callback) {
+      setupScriptureText(element, text);
       const letters = element.querySelectorAll('.typewriter-letter');
       let index = 0;
-      if(stTypeInterval) clearInterval(stTypeInterval);
-      stTypeInterval = setInterval(() => {
+      const interval = setInterval(() => {
         if (index < letters.length) {
           letters[index].classList.add('visible');
           index++;
         } else {
-          clearInterval(stTypeInterval);
+          clearInterval(interval);
           if (callback) callback();
         }
       }, 30);
     }
 
-    function deleteHeading(callback) {
-      const letters = refEl.querySelectorAll('.typewriter-letter');
-      let index = letters.length - 1;
-      function removeNext() {
-        if (index >= 0) {
-          letters[index].classList.remove('visible');
-          index--;
-          setTimeout(removeNext, 50);
-        } else {
-          if (callback) callback();
-        }
-      }
-      removeNext();
+    // ========== LOWER THIRD FUNCTIONS ==========
+    function showLowerThird(heading, headline, scrollMessages) {
+      ltHeading.textContent = heading;
+      
+      lowerThirdContainer.classList.add('visible');
+      lowerThirdContainer.classList.remove('hidden');
+      lowerThirdModule.classList.remove('outro');
+      lowerThirdModule.classList.add('active');
+      
+      typeBannerText(mainBannerText, headline, () => {});
+      setTimeout(() => { setupSeamlessScroll(scrollMessages); }, 400);
     }
 
-    function showScripture() {
-      scriptureContainer.classList.add('visible');
-      scriptureContainer.classList.remove('hidden');
-
+    function hideLowerThird() {
       return new Promise((resolve) => {
-        scriptureStage.classList.remove('box-outro');
-        scriptureStage.classList.add('box-intro');
+        lowerThirdModule.classList.remove('active');
+        lowerThirdModule.classList.add('outro');
+        pauseScroll();
+        clearBannerText(mainBannerText);
 
         setTimeout(() => {
-          const verse1 = verses[0];
-          typeText(refEl, verse1.ref, () => {
-            typeText(textEl, verse1.text, () => {
-              stTimeoutId = setTimeout(() => {
-                scriptureStage.classList.add('text-fade-out');
-                stTimeoutId = setTimeout(() => {
-                  scriptureStage.classList.remove('text-fade-out');
-                  const verse2 = verses[1];
-                  typeText(refEl, verse2.ref, () => {
-                    typeText(textEl, verse2.text, () => {
-                      stTimeoutId = setTimeout(() => {
-                        scriptureStage.classList.add('text-fade-out');
-                        stTimeoutId = setTimeout(() => {
-                          scriptureStage.classList.remove('text-fade-out');
-                          const verse3 = verses[2];
-                          typeText(refEl, verse3.ref, () => {
-                            typeText(textEl, verse3.text, () => {
-                              stTimeoutId = setTimeout(() => {
-                                scriptureStage.classList.add('text-fade-out');
-                                stTimeoutId = setTimeout(() => {
-                                  deleteHeading(() => {
-                                    stTimeoutId = setTimeout(() => {
-                                      scriptureStage.classList.remove('box-intro');
-                                      scriptureStage.classList.add('box-outro');
-                                      stTimeoutId = setTimeout(() => {
-                                        scriptureContainer.classList.remove('visible');
-                                        scriptureContainer.classList.add('hidden');
-                                        resolve();
-                                      }, 1200);
-                                    }, 400);
-                                  });
-                                }, 400);
-                              }, 4000);
-                            });
-                          });
-                        }, 400);
-                      }, 4000);
-                    });
-                  });
-                }, 400);
-              }, 4000);
-            });
-          });
-        }, 150);
+          lowerThirdContainer.classList.remove('visible');
+          lowerThirdContainer.classList.add('hidden');
+          lowerThirdModule.classList.remove('active', 'outro');
+          resolve();
+        }, 1500);
       });
     }
 
-    // ========== SPEAKER LOWER THIRD ==========
-    function showSpeakerLowerThird() {
+    // ========== SCRIPTURE FUNCTIONS ==========
+    function showScripture(ref, text) {
+      scriptureRef.textContent = ref;
+      
+      scriptureContainer.classList.add('visible');
+      scriptureContainer.classList.remove('hidden');
+      scriptureStage.classList.remove('box-outro');
+      scriptureStage.classList.add('box-intro');
+
+      setTimeout(() => {
+        typeScriptureText(scriptureText, text, () => {});
+      }, 150);
+    }
+
+    function hideScripture() {
+      return new Promise((resolve) => {
+        scriptureStage.classList.remove('box-intro');
+        scriptureStage.classList.add('box-outro');
+        
+        setTimeout(() => {
+          scriptureContainer.classList.remove('visible');
+          scriptureContainer.classList.add('hidden');
+          scriptureText.innerHTML = '';
+          resolve();
+        }, 1200);
+      });
+    }
+
+    // ========== SPEAKER FUNCTIONS ==========
+    function showSpeaker(role, name) {
+      speakerRoleText.textContent = role;
+      speakerNameText.textContent = name;
+      
       speakerContainer.classList.add('visible');
       speakerContainer.classList.remove('hidden');
       speakerModule.classList.remove('outro');
       speakerModule.classList.add('active');
 
+      // Auto-hide after 5 seconds
+      if (speakerTimeout) clearTimeout(speakerTimeout);
+      speakerTimeout = setTimeout(() => {
+        hideSpeaker();
+        socket.emit('speakerAutoHidden');
+      }, 5000);
+    }
+
+    function hideSpeaker() {
       return new Promise((resolve) => {
+        if (speakerTimeout) clearTimeout(speakerTimeout);
+        
+        speakerModule.classList.remove('active');
+        speakerModule.classList.add('outro');
+        
         setTimeout(() => {
-          speakerModule.classList.remove('active');
-          speakerModule.classList.add('outro');
-          
-          setTimeout(() => {
-            speakerContainer.classList.remove('visible');
-            speakerContainer.classList.add('hidden');
-            speakerModule.classList.remove('active', 'outro');
-            resolve();
-          }, 1500);
-        }, 8000);
+          speakerContainer.classList.remove('visible');
+          speakerContainer.classList.add('hidden');
+          speakerModule.classList.remove('active', 'outro');
+          resolve();
+        }, 1500);
       });
     }
 
-    // ========== MASTER LOOP ==========
-    async function masterLoop() {
-      while (true) {
-        updateDate();
-        await showLowerThird();
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await showScripture();
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await showSpeakerLowerThird();
-        await new Promise(resolve => setTimeout(resolve, 2000));
+    // ========== SOCKET.IO EVENT HANDLERS ==========
+    socket.on('updateLowerThird', async (data) => {
+      // If scripture is visible, hide it first (scripture takes priority)
+      if (scriptureContainer.classList.contains('visible')) {
+        await hideScripture();
       }
-    }
+      
+      // If speaker is visible, hide it
+      if (speakerContainer.classList.contains('visible')) {
+        await hideSpeaker();
+      }
 
-    masterLoop();
+      // If lower third is already visible, hide first then show with new data
+      if (lowerThirdContainer.classList.contains('visible')) {
+        await hideLowerThird();
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      showLowerThird(data.heading, data.headline, data.scrollMessages);
+    });
+
+    socket.on('hideLowerThird', async () => {
+      await hideLowerThird();
+    });
+
+    socket.on('showScripture', async (data) => {
+      // Hide lower third if visible
+      if (lowerThirdContainer.classList.contains('visible')) {
+        await hideLowerThird();
+      }
+      
+      // Hide speaker if visible
+      if (speakerContainer.classList.contains('visible')) {
+        await hideSpeaker();
+      }
+
+      // If scripture is already visible, hide first then show new
+      if (scriptureContainer.classList.contains('visible')) {
+        await hideScripture();
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      showScripture(data.ref, data.text);
+    });
+
+    socket.on('hideScripture', async () => {
+      await hideScripture();
+    });
+
+    socket.on('showSpeaker', async (data) => {
+      // Hide lower third if visible
+      if (lowerThirdContainer.classList.contains('visible')) {
+        await hideLowerThird();
+      }
+
+      // If speaker is already visible, hide first then show new
+      if (speakerContainer.classList.contains('visible')) {
+        await hideSpeaker();
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      showSpeaker(data.role, data.name);
+    });
+
+    socket.on('hideSpeaker', async () => {
+      await hideSpeaker();
+    });
+
+    // ========== INITIALIZATION ==========
+    updateDate();
+    console.log('Broadcast frontend ready, waiting for control signals...');
   })();
 </script>
 </body>
