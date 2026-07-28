@@ -66,7 +66,7 @@
     }
 
     /* ============================================================== */
-    /* MODULE 1: LOWER THIRD (ORIGINAL DESIGN) */
+    /* MODULE 1: LOWER THIRD (ORIGINAL DESIGN - UNCHANGED) */
     /* ============================================================== */
     .lower-third-wrapper {
       font-family: 'Poppins', sans-serif;
@@ -258,7 +258,7 @@
       opacity: 0;
     }
 
-    /* MAIN BANNER TEXT */
+    /* MAIN BANNER TEXT - RESTORED EXACT ORIGINAL STYLE */
     .main-banner h1 {
       color: #000000;
       font-size: 22px;
@@ -271,6 +271,7 @@
       opacity: 0;
     }
 
+    /* Typewriter letters for main banner */
     .main-banner .typewriter-letter {
       display: inline-block;
       opacity: 0;
@@ -418,7 +419,7 @@
     @keyframes fadeIn { 0% { opacity: 0; transform: skewX(32deg) translateY(5px); } 100% { opacity: 1; transform: skewX(32deg) translateY(0); } }
 
     /* ============================================================== */
-    /* MODULE 2: SCRIPTURE VIEW */
+    /* MODULE 2: SCRIPTURE VIEW (ELEMENT CENTERED, TEXT LEFT-ALIGNED) */
     /* ============================================================== */
     .scripture-wrapper {
       font-family: 'Inter', sans-serif;
@@ -489,12 +490,17 @@
       line-height: 1.5;
       font-style: italic;
       text-shadow: 0 0 10px rgba(138, 43, 226, 0.8), 0 0 25px rgba(75, 0, 130, 0.6), 0 0 50px rgba(48, 25, 145, 0.4);
+      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
       text-align: left;
       width: 100%;
     }
 
+    .scripture-text .typewriter-letter {
+      text-shadow: 0 0 12px rgba(0, 0, 205, 0.9), 0 0 25px rgba(138, 43, 226, 0.8), 0 0 45px rgba(148, 0, 211, 0.5), 0 0 80px rgba(25, 0, 90, 0.3);
+    }
+
     /* ============================================================== */
-    /* MODULE 3: SPEAKER LOWER THIRD */
+    /* MODULE 3: SPEAKER LOWER THIRD (SHORTER, MATCHES MAIN DESIGN) */
     /* ============================================================== */
     .speaker-wrapper {
       font-family: 'Poppins', sans-serif;
@@ -623,9 +629,9 @@
 
 <div class="broadcast-wrapper">
   
-  <!-- MODULE 1: LOWER THIRD -->
-  <div class="broadcast-module lower-third-wrapper" id="lowerThirdContainer">
-    <div class="lower-third-module" id="mainLowerThird">
+  <!-- MODULE 1: LOWER THIRD (SHOWN BY DEFAULT) -->
+  <div class="broadcast-module lower-third-wrapper visible" id="lowerThirdContainer">
+    <div class="lower-third-module active" id="mainLowerThird">
       <div class="logo-holder">
         <div class="logo-circle">
           <img class="logo" src="/images/ministry-logo.png" alt="Logo">
@@ -654,7 +660,7 @@
     </div>
   </div>
 
-  <!-- MODULE 2: SCRIPTURE VIEW -->
+  <!-- MODULE 2: SCRIPTURE VIEW (HIDDEN BY DEFAULT) -->
   <div class="broadcast-module scripture-wrapper" id="scriptureContainer">
     <div class="scripture-stage" id="scriptureStage">
       <div class="scripture-card">
@@ -664,7 +670,7 @@
     </div>
   </div>
 
-  <!-- MODULE 3: SPEAKER LOWER THIRD -->
+  <!-- MODULE 3: SPEAKER LOWER THIRD (HIDDEN BY DEFAULT) -->
   <div class="broadcast-module speaker-wrapper" id="speakerContainer">
     <div class="speaker-module" id="speakerModule">
       <div class="speaker-orange-bg"></div>
@@ -686,7 +692,7 @@
 <script>
   (function() {
     // ========== SOCKET.IO CONNECTION ==========
-    const socket = io('http://localhost:3000');
+    const socket = io();
 
     // ========== DOM ELEMENTS ==========
     const lowerThirdContainer = document.getElementById('lowerThirdContainer');
@@ -705,6 +711,19 @@
     const speakerModule = document.getElementById('speakerModule');
     const speakerRoleText = document.getElementById('speakerRoleText');
     const speakerNameText = document.getElementById('speakerNameText');
+
+    // ========== DEFAULT DATA ==========
+    const defaultLowerThird = {
+      heading: 'Repentance & Holiness',
+      headline: 'CITY MEGA CHURCH SUNDAY SERVICE',
+      scrollMessages: [
+        "For more information please contact Bishop Dr.JJ on 0700727435",
+        "repentandpreparetheway.org",
+        "City Mega Church Livestream",
+        "God Bless You",
+        "Thank you for watching"
+      ]
+    };
 
     // ========== VARIABLES ==========
     let ltAnimationId = null;
@@ -800,19 +819,36 @@
 
     // ========== LOWER THIRD FUNCTIONS ==========
     function showLowerThird(heading, headline, scrollMessages) {
+      // Update content
       ltHeading.textContent = heading;
       
+      // Reset animations by removing and re-adding classes
+      lowerThirdModule.classList.remove('active', 'outro');
+      
+      // Force reflow
+      void lowerThirdModule.offsetWidth;
+      
+      // Show container
       lowerThirdContainer.classList.add('visible');
       lowerThirdContainer.classList.remove('hidden');
-      lowerThirdModule.classList.remove('outro');
+      
+      // Trigger intro animation
       lowerThirdModule.classList.add('active');
       
+      // Animate text
       typeBannerText(mainBannerText, headline, () => {});
+      
+      // Start scroll
       setTimeout(() => { setupSeamlessScroll(scrollMessages); }, 400);
     }
 
     function hideLowerThird() {
       return new Promise((resolve) => {
+        if (!lowerThirdContainer.classList.contains('visible')) {
+          resolve();
+          return;
+        }
+
         lowerThirdModule.classList.remove('active');
         lowerThirdModule.classList.add('outro');
         pauseScroll();
@@ -843,6 +879,11 @@
 
     function hideScripture() {
       return new Promise((resolve) => {
+        if (!scriptureContainer.classList.contains('visible')) {
+          resolve();
+          return;
+        }
+
         scriptureStage.classList.remove('box-intro');
         scriptureStage.classList.add('box-outro');
         
@@ -860,9 +901,12 @@
       speakerRoleText.textContent = role;
       speakerNameText.textContent = name;
       
+      // Reset animations
+      speakerModule.classList.remove('active', 'outro');
+      void speakerModule.offsetWidth;
+      
       speakerContainer.classList.add('visible');
       speakerContainer.classList.remove('hidden');
-      speakerModule.classList.remove('outro');
       speakerModule.classList.add('active');
 
       // Auto-hide after 5 seconds
@@ -875,6 +919,11 @@
 
     function hideSpeaker() {
       return new Promise((resolve) => {
+        if (!speakerContainer.classList.contains('visible')) {
+          resolve();
+          return;
+        }
+
         if (speakerTimeout) clearTimeout(speakerTimeout);
         
         speakerModule.classList.remove('active');
@@ -890,13 +939,22 @@
     }
 
     // ========== SOCKET.IO EVENT HANDLERS ==========
+    socket.on('connect', () => {
+      console.log('✅ Connected to broadcast server');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('🔌 Disconnected from broadcast server');
+    });
+
     socket.on('updateLowerThird', async (data) => {
-      // If scripture is visible, hide it first (scripture takes priority)
+      console.log('📺 Update Lower Third:', data);
+      
+      // Hide scripture and speaker if visible
       if (scriptureContainer.classList.contains('visible')) {
         await hideScripture();
       }
       
-      // If speaker is visible, hide it
       if (speakerContainer.classList.contains('visible')) {
         await hideSpeaker();
       }
@@ -911,10 +969,13 @@
     });
 
     socket.on('hideLowerThird', async () => {
+      console.log('📺 Hide Lower Third');
       await hideLowerThird();
     });
 
     socket.on('showScripture', async (data) => {
+      console.log('📖 Show Scripture:', data);
+      
       // Hide lower third if visible
       if (lowerThirdContainer.classList.contains('visible')) {
         await hideLowerThird();
@@ -935,10 +996,13 @@
     });
 
     socket.on('hideScripture', async () => {
+      console.log('📖 Hide Scripture');
       await hideScripture();
     });
 
     socket.on('showSpeaker', async (data) => {
+      console.log('🎤 Show Speaker:', data);
+      
       // Hide lower third if visible
       if (lowerThirdContainer.classList.contains('visible')) {
         await hideLowerThird();
@@ -954,12 +1018,27 @@
     });
 
     socket.on('hideSpeaker', async () => {
+      console.log('🎤 Hide Speaker');
       await hideSpeaker();
     });
 
     // ========== INITIALIZATION ==========
-    updateDate();
-    console.log('Broadcast frontend ready, waiting for control signals...');
+    function initialize() {
+      updateDate();
+      
+      // Show default lower third immediately
+      showLowerThird(
+        defaultLowerThird.heading,
+        defaultLowerThird.headline,
+        defaultLowerThird.scrollMessages
+      );
+      
+      console.log('🚀 Broadcast ready - Lower third visible by default');
+      console.log('⏳ Waiting for control signals...');
+    }
+
+    // Start the broadcast display
+    initialize();
   })();
 </script>
 </body>
