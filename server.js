@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
 
 // Optional: Handle controller route
 app.get('/controller', (req, res) => {
-    res.sendFile(path.join(__dirname, 'controller.html'));
+    res.sendFile(path.join(__dirname, 'public', 'controller.html'));
 });
 
 // ========== SOCKET.IO LOGIC ==========
