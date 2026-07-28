@@ -1,783 +1,974 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Broadcast System - Alternating Lower Third & Scripture</title>
-    
-    <!-- Fonts for Lower Third -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Fonts for Scripture View -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Broadcast System • Three Lower Thirds Loop</title>
+  
+  <!-- Fonts for Lower Third -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Fonts for Scripture & Speaker -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
-    <style>
-        /* ============================================================== */
-        /* GLOBAL RESET & SHARED STYLES */
-        /* ============================================================== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  <style>
+    /* ============================================================== */
+    /* GLOBAL RESET & SHARED STYLES */
+    /* ============================================================== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            background-color: #3b4852; 
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            height: 100vh;
-            overflow: hidden;
-            padding-bottom: 50px;
-        }
+    body {
+      background-color: #3b4852; 
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 100vh;
+      overflow: hidden;
+      padding-bottom: 50px;
+    }
 
-        /* COMMON HOLDING CONTAINER: Centers all content on screen */
-        .broadcast-wrapper {
-            width: 100%;
-            max-width: 920px; /* Matches Lower Third width */
-            position: relative;
-            display: flex;
-            justify-content: center; /* This forces everything to the centerline */
-            align-items: flex-end;
-        }
+    /* COMMON HOLDING CONTAINER - FIXED CENTERING */
+    .broadcast-wrapper {
+      width: 100vw;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      overflow: visible;
+    }
 
-        /* Shared Base States for both Modules */
-        .broadcast-module {
-            position: absolute;
-            bottom: 0; /* Both modules share the exact same bottom baseline */
-            width: 100%;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.6s ease-in-out, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            transform: translateY(30px);
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-        }
+    .broadcast-module {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease-in-out, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
 
-        .broadcast-module.visible {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
+    .broadcast-module.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
 
-        .broadcast-module.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(30px);
-        }
+    .broadcast-module.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(30px);
+    }
 
-        /* ============================================================== */
-        /* MODULE 1: LOWER THIRD (UNTOUCHED) */
-        /* ============================================================== */
-        .lower-third-wrapper {
-            font-family: 'Poppins', sans-serif;
-            height: 110px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            width: 100%;
-        }
+    /* ============================================================== */
+    /* MODULE 1: LOWER THIRD (ORIGINAL – ABSOLUTELY NO POSITION CHANGES) */
+    /* ============================================================== */
+    .lower-third-wrapper {
+      font-family: 'Poppins', sans-serif;
+      height: 110px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      width: 920px;
+    }
 
-        .lower-third-module {
-            position: relative;
-            width: 920px;
-            height: 110px;
-            transition: opacity 0.4s ease-in;
-        }
+    .lower-third-module {
+      position: relative;
+      width: 920px;
+      height: 110px;
+      transition: opacity 0.4s ease-in;
+    }
 
-        /* --- STATIC HOLDING CONTAINERS --- */
-        .logo-holder {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            top: 40%;
-            left: 60px;
-            width: 100px;
-            height: 100px;
-            transform: translateY(-50%);
-            z-index: 100;
-            pointer-events: none;
-        }
+    .logo-holder {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: 40%;
+      left: 60px;
+      width: 100px;
+      height: 100px;
+      transform: translateY(-50%);
+      z-index: 100;
+      pointer-events: none;
+    }
 
-        .bottom-track-holder {
-            position: absolute;
-            top: 70px;
-            left: 250px;
-            width: 650px;
-            height: 20px;
-            background: #9996ff;
-            z-index: 5;
-            pointer-events: none;
-        }
+    .bottom-track-holder {
+      position: absolute;
+      top: 70px;
+      left: 250px;
+      width: 650px;
+      height: 20px;
+      background: #9996ff;
+      z-index: 5;
+      pointer-events: none;
+    }
 
-        /* --- DYNAMIC ELEMENTS --- */
-        .logo-circle {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: white; 
-            border-radius: 50%;
-            border: 2px solid #ffffff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: scale(0);
-            opacity: 0;
-            overflow: hidden;
-        }
-    
-        .logo{ width: 100%; height: 100%; object-fit: cover; }
+    .logo-circle {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: white; 
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: scale(0);
+      opacity: 0;
+      overflow: hidden;
+    }
+  
+    .logo{ width: 100%; height: 100%; object-fit: cover; }
 
-        .logo-holder::before {
-            content: '';
-            position: absolute;
-            top: -15px;
-            left: -15px;
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            z-index: -1;
-            transform: scale(0);
-            opacity: 0;
-            pointer-events: none;
-            transition: none;
-        }
+    .logo-holder::before {
+      content: '';
+      position: absolute;
+      top: -15px;
+      left: -15px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      z-index: -1;
+      transform: scale(0);
+      opacity: 0;
+      pointer-events: none;
+      transition: none;
+    }
 
-        .orange-bg {
-            position: absolute;
-            top: 25px;
-            left: 20px;
-            width: 400px;
-            height: 45px;
-            background-color: #fbad18;
-            transform: skewX(-32deg);
-            border-radius: 6px; 
-            z-index: 5;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transform: skewX(-32deg) translateX(600px) scale(0.8);
-            opacity: 0;
-        }
+    .orange-bg {
+      position: absolute;
+      top: 25px;
+      left: 20px;
+      width: 400px;
+      height: 45px;
+      background-color: #fbad18;
+      transform: skewX(-32deg);
+      border-radius: 6px; 
+      z-index: 5;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transform: skewX(-32deg) translateX(600px) scale(0.8);
+      opacity: 0;
+    }
 
-        .title-bar-wrapper {
-            position: absolute;
-            top: 5px; 
-            left: 175px;
-            width: 250px; 
-            height: 25px;
-            transform: skewX(-32deg);
-            border-radius: 6px;
-            z-index: 11;
-            transform: skewX(-32deg) translateX(-300px);
-            opacity: 0;
-        }
+    .title-bar-wrapper {
+      position: absolute;
+      top: 5px; 
+      left: 175px;
+      width: 250px; 
+      height: 25px;
+      transform: skewX(-32deg);
+      border-radius: 6px;
+      z-index: 11;
+      transform: skewX(-32deg) translateX(-300px);
+      opacity: 0;
+    }
 
-        .title-bar {
-            width: 100%;
-            height: 100%;
-            background-color: #0d0052;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
+    .title-bar {
+      width: 100%;
+      height: 100%;
+      background-color: #0d0052;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
 
-        .title-bar h2 {
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            padding-left: 20px;
-            transform: skewX(32deg);
-            white-space: nowrap;
-            opacity: 0;
-        }
+    .title-bar h2 {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding-left: 20px;
+      transform: skewX(32deg);
+      white-space: nowrap;
+      opacity: 0;
+    }
 
-        .main-banner-wrapper {
-            position: absolute;
-            top: 20px;
-            left: 40px;
-            width: 850px;
-            height: 45px;
-            transform: skewX(-32deg);
-            border-radius: 6px;
-            z-index: 10;
-            transform: skewX(-32deg) translateX(-400px);
-            opacity: 0;
-        }
+    .main-banner-wrapper {
+      position: absolute;
+      top: 20px;
+      left: 40px;
+      width: 850px;
+      height: 45px;
+      transform: skewX(-32deg);
+      border-radius: 6px;
+      z-index: 10;
+      transform: skewX(-32deg) translateX(-400px);
+      opacity: 0;
+    }
 
-        .main-banner {
-            width: 100%;
-            height: 100%;
-            background: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            border-radius: 6px;
-            display: flex;
-            overflow-x: hidden;
-            align-items: center;
-            position: relative;
-        }
+    .main-banner {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      border-radius: 6px;
+      display: flex;
+      overflow-x: hidden;
+      align-items: center;
+      position: relative;
+    }
 
-        .main-banner-wrapper::before {
-            content: '';
-            position: absolute;
-            transform: skewX(32deg);
-            top: -40%;
-            left: 75%;
-            width: 200px;
-            height: 120px;
-            transform: scale(1);
-            transform-origin: center;
-            background-image: url("/images/streak2.png");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            z-index: 5000;
-            pointer-events: none;
-            opacity: 0;
-        }
+    .main-banner-wrapper::before {
+      content: '';
+      position: absolute;
+      transform: skewX(32deg);
+      top: -40%;
+      left: 75%;
+      width: 200px;
+      height: 120px;
+      transform: scale(1);
+      transform-origin: center;
+      background-image: url("/images/streak2.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 5000;
+      pointer-events: none;
+      opacity: 0;
+    }
 
-        .main-banner::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 40%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(20, 20, 255, 0.1),
-                rgba(20, 20, 255, 0.3),
-                rgba(20, 20, 255, 0.1),
-                transparent
-            );
-            z-index: 5;
-            pointer-events: none;
-            opacity: 0;
-        }
+    .main-banner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(20, 20, 255, 0.1),
+        rgba(20, 20, 255, 0.3),
+        rgba(20, 20, 255, 0.1),
+        transparent
+      );
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+    }
 
-        .main-banner h1 {
-            color: #000000;
-            font-size: 22px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            padding-left: 140px;
-            transform: skewX(32deg);
-            white-space: nowrap;
-            opacity: 0;
-        }
+    /* MAIN BANNER TEXT - RESTORED EXACT ORIGINAL STYLE */
+    .main-banner h1 {
+      color: #000000;
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding-left: 140px;
+      transform: skewX(32deg);
+      white-space: nowrap;
+      opacity: 0;
+    }
 
-        .bottom-bar-bg {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black;
-            transform: skewX(-32deg);
-            border-radius: 6px;
-            z-index: 0;
-            padding-left: 20px;
-            transform: skewX(-32deg) translateX(-350px);
-            opacity: 0;
-        }
-        .bottom-bar-bg::before{
-            position: absolute;
-            content: '';
-            top: 0;
-            left: -70;
-            border-radius: 6px;
-            width: 100px;
-            height: 20px;
-            transform: skewX(-3deg) translateX(-75px);
-            background: black;
-        }
+    /* Typewriter letters for main banner */
+    .main-banner .typewriter-letter {
+      display: inline-block;
+      opacity: 0;
+      transition: opacity 0.1s ease-out;
+      color: #000000;
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .main-banner .typewriter-letter.visible {
+      opacity: 1 !important;
+    }
 
-        .scroll-wrapper {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            padding-left: 50px; 
-            padding-right: 50px; 
-            clip-path: inset(0% 100% 0% 0%);
-            z-index: 1;
-            overflow: hidden;
-        }
+    .bottom-bar-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      transform: skewX(-32deg);
+      border-radius: 6px;
+      z-index: 0;
+      padding-left: 20px;
+      transform: skewX(-32deg) translateX(-350px);
+      opacity: 0;
+    }
+    .bottom-bar-bg::before{
+      position: absolute;
+      content: '';
+      top: 0;
+      left: -70;
+      border-radius: 6px;
+      width: 100px;
+      height: 20px;
+      transform: skewX(-3deg) translateX(-75px);
+      background: black;
+    }
 
-        .scrolling-text {
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 1.5px;
-            white-space: nowrap;
-            display: flex;
-            padding-left: 30px;
-            will-change: transform; 
-        }
+    .scroll-wrapper {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding-left: 50px; 
+      padding-right: 50px; 
+      clip-path: inset(0% 100% 0% 0%);
+      z-index: 1;
+      overflow: hidden;
+    }
 
-        .time-tag {
-            position: absolute;
-            color: #0d0052;
-            top: 0px; 
-            right: 0px;
-            height: 21px;
-            padding: 0 18px;
-            min-width: 90px;
-            background-color: #ffffff;
-            font-weight: 900;
-            transform: skewX(-32deg);
-            border-radius: 6px;
-            z-index: 20;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            display: flex;
-            flex-grow: 1;
-            align-items: center;
-            justify-content: center;
-            transform: skewX(-32deg) translateX(-850px);
-            opacity: 0;
-        }
+    .scrolling-text {
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+      display: flex;
+      padding-left: 30px;
+      will-change: transform; 
+    }
 
-        .time-tag span {
-            color: #0d;
-            font-size: 15px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            transform: skewX(32deg);
-        }
+    .time-tag {
+      position: absolute;
+      color: #0d0052;
+      top: 0px; 
+      right: 0px;
+      height: 21px;
+      padding: 0 18px;
+      min-width: 90px;
+      background-color: #ffffff;
+      font-weight: 900;
+      transform: skewX(-32deg);
+      border-radius: 6px;
+      z-index: 20;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      display: flex;
+      flex-grow: 1;
+      align-items: center;
+      justify-content: center;
+      transform: skewX(-32deg) translateX(-850px);
+      opacity: 0;
+    }
 
-        /* --- Animation States --- */
-        .lower-third-module.active { opacity: 1; pointer-events: auto; }
-        .lower-third-module.outro { transition: opacity 0.6s ease-in; opacity: 0; pointer-events: none; }
+    .time-tag span {
+      color: #0d;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      transform: skewX(32deg);
+    }
 
-        /* Pulsing Halo */
-        .lower-third-module.active .logo-holder::before { animation: pulseHalo 6s ease-in-out infinite 0.8s forwards; }
+    /* Animation States for Lower Third */
+    .lower-third-module.active { opacity: 1; pointer-events: auto; }
+    .lower-third-module.outro { transition: opacity 0.6s ease-in; opacity: 0; pointer-events: none; }
 
-        /* Streak Intro & Outro */
-        .lower-third-module.active .main-banner-wrapper::before { animation: streak-intro 3.5s cubic-bezier(0.25, 0.8, 0.25, 1) 1.5s forwards; }
-        .lower-third-module.outro .main-banner-wrapper::before { animation: streak-outro 1.2s cubic-bezier(0.5, 0, 0.5, 1) 0s forwards; }
+    .lower-third-module.active .logo-holder::before { animation: pulseHalo 6s ease-in-out infinite 0.8s forwards; }
+    .lower-third-module.active .main-banner-wrapper::before { animation: streak-intro 3.5s cubic-bezier(0.25, 0.8, 0.25, 1) 1.5s forwards; }
+    .lower-third-module.outro .main-banner-wrapper::before { animation: streak-outro 1.2s cubic-bezier(0.5, 0, 0.5, 1) 0s forwards; }
+    .lower-third-module.active .main-banner::after { opacity: 1; animation: lightSweep 25s ease-in-out infinite 0.6s; }
 
-        /* Light Sweep */
-        .lower-third-module.active .main-banner::after { opacity: 1; animation: lightSweep 25s ease-in-out infinite 0.6s; }
+    .lower-third-module.active .logo-circle { animation: growInPlace 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.0s forwards; }
+    .lower-third-module.active .orange-bg { animation: zoomFromRight 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.0s forwards; }
+    .lower-third-module.active .title-bar-wrapper { animation: slideFromLeftTitle 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) 0.1s forwards; }
+    .lower-third-module.active .title-bar h2 { animation: fadeIn 0.4s ease-out 0.3s forwards; }
+    .lower-third-module.active .main-banner-wrapper { animation: slideFromLeft 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.15s forwards; }
+    .lower-third-module.active .main-banner h1 { animation: fadeIn 0.4s ease-out 0.55s forwards; }
+    .lower-third-module.active .bottom-bar-bg { animation: slideFromLeftSub 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s forwards; }
+    .lower-third-module.active .time-tag { animation: sweepRight 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.35s forwards; }
+    .lower-third-module.active .scroll-wrapper { animation: revealText 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.35s forwards; }
 
-        /* Slide Animations */
-        .lower-third-module.active .logo-circle { animation: growInPlace 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.0s forwards; }
-        .lower-third-module.active .orange-bg { animation: zoomFromRight 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.0s forwards; }
-        .lower-third-module.active .title-bar-wrapper { animation: slideFromLeftTitle 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) 0.1s forwards; }
-        .lower-third-module.active .title-bar h2 { animation: fadeIn 0.4s ease-out 0.3s forwards; }
-        .lower-third-module.active .main-banner-wrapper { animation: slideFromLeft 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.15s forwards; }
-        .lower-third-module.active .main-banner h1 { animation: fadeIn 0.4s ease-out 0.55s forwards; }
-        .lower-third-module.active .bottom-bar-bg { animation: slideFromLeftSub 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.25s forwards; }
-        .lower-third-module.active .time-tag { animation: sweepRight 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.35s forwards; }
-        .lower-third-module.active .scroll-wrapper { animation: revealText 0.9s cubic-bezier(0.25, 0.8, 0.25, 1) 0.35s forwards; }
+    .lower-third-module.outro .logo-circle { animation: shrinkInPlace 0.5s cubic-bezier(0.5, 0, 0.5, 1) 0.15s forwards; }
+    .lower-third-module.outro .bottom-bar-bg { animation: slideOutLeftSub 0.5s ease-in 0.3s forwards; }
+    .lower-third-module.outro .main-banner-wrapper { animation: slideOutLeft 0.5s ease-in 0.4s forwards; }
+    .lower-third-module.outro .title-bar-wrapper { animation: slideOutLeftTitle 0.4s ease-in 0.45s forwards; }
+    .lower-third-module.outro .orange-bg { animation: zoomOutRight 0.5s ease-in 0.6s forwards; }
+    .lower-third-module.outro .time-tag { animation: sweepLeft 0.7s cubic-bezier(0.5, 0, 0.5, 1) 0.05s forwards; }
+    .lower-third-module.outro .scroll-wrapper { animation: hideText 0.7s cubic-bezier(0.5, 0, 0.5, 1) 0.05s forwards; }
 
-        .lower-third-module.outro .logo-circle { animation: shrinkInPlace 0.5s cubic-bezier(0.5, 0, 0.5, 1) 0.15s forwards; }
-        .lower-third-module.outro .bottom-bar-bg { animation: slideOutLeftSub 0.5s ease-in 0.3s forwards; }
-        .lower-third-module.outro .main-banner-wrapper { animation: slideOutLeft 0.5s ease-in 0.4s forwards; }
-        .lower-third-module.outro .title-bar-wrapper { animation: slideOutLeftTitle 0.4s ease-in 0.45s forwards; }
-        .lower-third-module.outro .orange-bg { animation: zoomOutRight 0.5s ease-in 0.6s forwards; }
-        .lower-third-module.outro .time-tag { animation: sweepLeft 0.7s cubic-bezier(0.5, 0, 0.5, 1) 0.05s forwards; }
-        .lower-third-module.outro .scroll-wrapper { animation: hideText 0.7s cubic-bezier(0.5, 0, 0.5, 1) 0.05s forwards; }
+    @keyframes pulseHalo {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { opacity: 0.8; }
+      75% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(0.5); opacity: 0; }
+    }
+    @keyframes lightSweep { 0% { left: -40%; } 100% { left: 140%; } }
+    @keyframes streak-intro { 0% { left: 75%; transform: scale(1); opacity: 0; } 5% { opacity: 1; } 60% { left: 5%; transform: scale(3); opacity: 1; } 100% { left: 5%; transform: scale(3); opacity: 0; } }
+    @keyframes streak-outro { 0% { left: 5%; transform: scale(3); } 60% { left: 75%; transform: scale(1); } 100% { left: 75%; transform: scale(0.5); } }
+    @keyframes growInPlace { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes shrinkInPlace { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
+    @keyframes zoomFromRight { 0% { transform: skewX(-32deg) translateX(600px) scale(0.6); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0) scale(1); opacity: 1; } }
+    @keyframes zoomOutRight { 0% { transform: skewX(-32deg) translateX(0) scale(1); opacity: 1; } 100% { transform: skewX(-32deg) translateX(600px) scale(0.6); opacity: 0; } }
+    @keyframes slideFromLeftTitle { 0% { transform: skewX(-32deg) translateX(-300px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
+    @keyframes slideOutLeftTitle { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-300px); opacity: 0; } }
+    @keyframes slideFromLeft { 0% { transform: skewX(-32deg) translateX(-400px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
+    @keyframes slideOutLeft { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-400px); opacity: 0; } }
+    @keyframes slideFromLeftSub { 0% { transform: skewX(-32deg) translateX(-350px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
+    @keyframes slideOutLeftSub { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-350px); opacity: 0; } }
+    @keyframes sweepRight { 0% { transform: skewX(-32deg) translateX(-850px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
+    @keyframes sweepLeft { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-850px); opacity: 0; } }
+    @keyframes revealText { 0% { clip-path: inset(0% 100% 0% 0%); } 100% { clip-path: inset(0% 0% 0% 0%); } }
+    @keyframes hideText { 0% { clip-path: inset(0% 0% 0% 0%); } 100% { clip-path: inset(0% 100% 0% 0%); } }
+    @keyframes fadeIn { 0% { opacity: 0; transform: skewX(32deg) translateY(5px); } 100% { opacity: 1; transform: skewX(32deg) translateY(0); } }
 
-        /* Keyframes */
-        @keyframes pulseHalo {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { opacity: 0.8; }
-            75% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(0.5); opacity: 0; }
-        }
-        @keyframes lightSweep { 0% { left: -40%; } 100% { left: 140%; } }
-        @keyframes streak-intro { 0% { left: 75%; transform: scale(1); opacity: 0; } 5% { opacity: 1; } 60% { left: 5%; transform: scale(3); opacity: 1; } 100% { left: 5%; transform: scale(3); opacity: 0; } }
-        @keyframes streak-outro { 0% { left: 5%; transform: scale(3); } 60% { left: 75%; transform: scale(1); } 100% { left: 75%; transform: scale(0.5); } }
-        @keyframes growInPlace { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes shrinkInPlace { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
-        @keyframes zoomFromRight { 0% { transform: skewX(-32deg) translateX(600px) scale(0.6); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0) scale(1); opacity: 1; } }
-        @keyframes zoomOutRight { 0% { transform: skewX(-32deg) translateX(0) scale(1); opacity: 1; } 100% { transform: skewX(-32deg) translateX(600px) scale(0.6); opacity: 0; } }
-        @keyframes slideFromLeftTitle { 0% { transform: skewX(-32deg) translateX(-300px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
-        @keyframes slideOutLeftTitle { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-300px); opacity: 0; } }
-        @keyframes slideFromLeft { 0% { transform: skewX(-32deg) translateX(-400px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
-        @keyframes slideOutLeft { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-400px); opacity: 0; } }
-        @keyframes slideFromLeftSub { 0% { transform: skewX(-32deg) translateX(-350px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
-        @keyframes slideOutLeftSub { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-350px); opacity: 0; } }
-        @keyframes sweepRight { 0% { transform: skewX(-32deg) translateX(-850px); opacity: 0; } 100% { transform: skewX(-32deg) translateX(0); opacity: 1; } }
-        @keyframes sweepLeft { 0% { transform: skewX(-32deg) translateX(0); opacity: 1; } 100% { transform: skewX(-32deg) translateX(-850px); opacity: 0; } }
-        @keyframes revealText { 0% { clip-path: inset(0% 100% 0% 0%); } 100% { clip-path: inset(0% 0% 0% 0%); } }
-        @keyframes hideText { 0% { clip-path: inset(0% 0% 0% 0%); } 100% { clip-path: inset(0% 100% 0% 0%); } }
-        @keyframes fadeIn { 0% { opacity: 0; transform: skewX(32deg) translateY(5px); } 100% { opacity: 1; transform: skewX(32deg) translateY(0); } }
-        @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+    /* ============================================================== */
+    /* MODULE 2: SCRIPTURE VIEW (ELEMENT CENTERED, TEXT LEFT-ALIGNED) */
+    /* ============================================================== */
+    .scripture-wrapper {
+      font-family: 'Inter', sans-serif;
+      width: 850px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
 
+    .scripture-stage {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      margin: 0 auto;
+    }
 
-        /* ============================================================== */
-        /* MODULE 2: SCRIPTURE VIEW (CORRECTED ALIGNMENT)                 */
-        /* ============================================================== */
-        .scripture-wrapper {
-            font-family: 'Inter', sans-serif;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-        }
+    .scripture-stage.box-intro {
+      transform: translateY(0) !important;
+      transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .scripture-stage.box-outro {
+      transform: translateY(30px) !important;
+      transition: transform 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+    }
 
-        .scripture-stage {
-            position: relative;
-            width: 850px; /* Exact same width as the white banner */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            /* Baseline matches Lower Third via the wrapper */
-            transform: translateY(30px);
-            margin: 0 auto;
-        }
+    .typewriter-letter {
+      display: inline-block;
+      opacity: 0;
+      transition: opacity 0.1s ease-out;
+    }
+    .typewriter-letter.visible { opacity: 1 !important; }
+    .scripture-stage.text-fade-out .typewriter-letter {
+      opacity: 0 !important;
+      transition: opacity 0.4s ease-in !important;
+    }
 
-        .scripture-stage.box-intro {
-            transform: translateY(0) !important;
-            transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        .scripture-stage.box-outro {
-            transform: translateY(30px) !important;
-            transition: transform 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-        }
+    .scripture-card {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+      padding: 20px 40px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left;
+      min-height: 150px;
+      height: auto;
+      width: 100%;
+    }
 
-        .typewriter-letter {
-            display: inline-block;
-            opacity: 0;
-            transition: opacity 0.1s ease-out;
-        }
-        .typewriter-letter.visible { opacity: 1 !important; }
-        .scripture-stage.text-fade-out .typewriter-letter {
-            opacity: 0 !important;
-            transition: opacity 0.4s ease-in !important;
-        }
+    .scripture-ref {
+      font-family: 'Georgia', serif;
+      font-weight: 700;
+      color: #FFD700;
+      font-size: 24px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+      text-align: left;
+    }
 
-        .scripture-card {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(6px);
-            box-shadow: 0 10px 35px rgba(0,0,0,0.6);
-            padding: 20px 40px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            /* Align text to the left by default (no center alignment!) */
-            text-align: left;
-            
-            /* FLEXIBLE HEIGHT: Expands upward to fit text */
-            min-height: 150px; 
-            height: auto;      
-            width: 100%;
-        }
+    .scripture-text {
+      color: #ffffff;
+      font-family: 'Georgia', serif;
+      font-weight: 400;
+      font-size: 22px;
+      line-height: 1.5;
+      font-style: italic;
+      text-shadow: 0 0 10px rgba(138, 43, 226, 0.8), 0 0 25px rgba(75, 0, 130, 0.6), 0 0 50px rgba(48, 25, 145, 0.4);
+      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      text-align: left;
+      width: 100%;
+    }
 
-        .scripture-ref {
-            font-family: 'Georgia', serif;
-            font-weight: 700;
-            color: #FFD700; 
-            font-size: 24px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
-            text-align: left;
-        }
+    .scripture-text .typewriter-letter {
+      text-shadow: 0 0 12px rgba(0, 0, 205, 0.9), 0 0 25px rgba(138, 43, 226, 0.8), 0 0 45px rgba(148, 0, 211, 0.5), 0 0 80px rgba(25, 0, 90, 0.3);
+    }
 
-        .scripture-text {
-            color: #ffffff;
-            font-family: 'Georgia', serif;
-            font-weight: 400;
-            font-size: 22px;
-            line-height: 1.5;
-            font-style: italic;
-            text-shadow: 0 0 10px rgba(138, 43, 226, 0.8), 0 0 25px rgba(75, 0, 130, 0.6), 0 0 50px rgba(48, 25, 145, 0.4);
-            -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-            text-align: left;
-            width: 100%;
-        }
+    /* ============================================================== */
+    /* MODULE 3: SPEAKER LOWER THIRD (SHORTER, MATCHES MAIN DESIGN) */
+    /* ============================================================== */
+    .speaker-wrapper {
+      font-family: 'Poppins', sans-serif;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      width: 750px;
+    }
 
-        .scripture-text .typewriter-letter {
-            text-shadow: 0 0 12px rgba(0, 0, 205, 0.9), 0 0 25px rgba(138, 43, 226, 0.8), 0 0 45px rgba(148, 0, 211, 0.5), 0 0 80px rgba(25, 0, 90, 0.3);
-        }
+    .speaker-module {
+      position: relative;
+      width: 450px;
+      height: 80px;
+      transition: opacity 0.4s ease-in;
+    }
 
-        @media (max-width: 768px) { 
-            .scripture-card { min-height: 110px; padding: 15px 25px; } 
-            .scripture-ref { font-size: 18px; } 
-            .scripture-text { font-size: 17px; } 
-        }
-        @media (max-width: 480px) { 
-            .scripture-card { min-height: 90px; padding: 10px 15px; } 
-            .scripture-ref { font-size: 14px; } 
-            .scripture-text { font-size: 13px; } 
-        }
-    </style>
+    .speaker-orange-bg {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      width: 320px;
+      height: 40px;
+      background-color: #fbad18;
+      transform: skewX(-32deg);
+      border-radius: 6px;
+      z-index: 5;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: skewX(-32deg) translateX(500px) scale(0.8);
+    }
+
+    .speaker-role-wrapper {
+      position: absolute;
+      top: 2px;
+      left: 140px;
+      width: 220px;
+      height: 22px;
+      transform: skewX(-32deg);
+      border-radius: 6px;
+      z-index: 11;
+      opacity: 0;
+      transform: skewX(-32deg) translateX(-250px);
+    }
+
+    .speaker-role-bar {
+      width: 100%;
+      height: 100%;
+      background-color: #0d0052;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .speaker-role-bar span {
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding-left: 15px;
+      transform: skewX(32deg);
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .speaker-name-wrapper {
+      position: absolute;
+      top: 15px;
+      left: 40px;
+      width: 680px;
+      height: 40px;
+      transform: skewX(-32deg);
+      border-radius: 6px;
+      z-index: 10;
+      opacity: 0;
+      transform: skewX(-32deg) translateX(-350px);
+    }
+
+    .speaker-name-banner {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .speaker-name-banner span {
+      color: #000000;
+      font-size: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding-left: 120px;
+      transform: skewX(32deg);
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    /* Speaker Animations */
+    .speaker-module.active { opacity: 1; pointer-events: auto; }
+    .speaker-module.outro { transition: opacity 0.6s ease-in; opacity: 0; pointer-events: none; }
+
+    .speaker-module.active .speaker-orange-bg { animation: zoomFromRight 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.0s forwards; }
+    .speaker-module.active .speaker-role-wrapper { animation: slideFromLeftTitle 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) 0.1s forwards; }
+    .speaker-module.active .speaker-role-bar span { animation: fadeInSpeaker 0.4s ease-out 0.3s forwards; }
+    .speaker-module.active .speaker-name-wrapper { animation: slideFromLeft 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 0.15s forwards; }
+    .speaker-module.active .speaker-name-banner span { animation: fadeInSpeaker 0.4s ease-out 0.55s forwards; }
+
+    .speaker-module.outro .speaker-name-wrapper { animation: slideOutLeft 0.5s ease-in 0.4s forwards; }
+    .speaker-module.outro .speaker-role-wrapper { animation: slideOutLeftTitle 0.4s ease-in 0.45s forwards; }
+    .speaker-module.outro .speaker-orange-bg { animation: zoomOutRight 0.5s ease-in 0.6s forwards; }
+
+    @keyframes fadeInSpeaker {
+      0% { opacity: 0; transform: skewX(32deg) translateY(5px); }
+      100% { opacity: 1; transform: skewX(32deg) translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .scripture-card { min-height: 110px; padding: 15px 25px; }
+      .scripture-ref { font-size: 18px; }
+      .scripture-text { font-size: 17px; }
+    }
+    @media (max-width: 480px) {
+      .scripture-card { min-height: 90px; padding: 10px 15px; }
+      .scripture-ref { font-size: 14px; }
+      .scripture-text { font-size: 13px; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="broadcast-wrapper">
-        
-        <!-- ============================================================== -->
-        <!-- MODULE 1: LOWER THIRD CONTAINER                                -->
-        <!-- ============================================================== -->
-        <div class="broadcast-module lower-third-wrapper" id="lowerThirdContainer">
-            <div class="lower-third-module" id="mainLowerThird">
-                <div class="logo-holder">
-                    <div class="logo-circle">
-                        <img class="logo" src="/images/ministry-logo.png" alt="Logo">
-                    </div>
-                </div>
-                <div class="orange-bg"></div>
-                <div class="title-bar-wrapper">
-                    <div class="title-bar">
-                        <h2>Repentance & Holiness</h2>
-                    </div>
-                </div>
-                <div class="main-banner-wrapper">
-                    <div class="main-banner">
-                        <h1>CITY MEGA CHURCH SUNDAY SERVICE</h1>
-                    </div>
-                </div>
-                <div class="bottom-track-holder">
-                    <div class="bottom-bar-bg"></div>
-                    <div class="scroll-wrapper">
-                        <div class="scrolling-text" id="scrollContainer"></div>
-                    </div>
-                    <div class="time-tag">
-                        <span id="dateDisplay">24 December 2026</span>
-                    </div>
-                </div>
-            </div>
+<div class="broadcast-wrapper">
+  
+  <!-- MODULE 1: LOWER THIRD (ORIGINAL) -->
+  <div class="broadcast-module lower-third-wrapper" id="lowerThirdContainer">
+    <div class="lower-third-module" id="mainLowerThird">
+      <div class="logo-holder">
+        <div class="logo-circle">
+          <img class="logo" src="/images/ministry-logo.png" alt="Logo">
         </div>
-
-        <!-- ============================================================== -->
-        <!-- MODULE 2: SCRIPTURE VIEW CONTAINER                             -->
-        <!-- ============================================================== -->
-        <div class="broadcast-module scripture-wrapper" id="scriptureContainer">
-            <div class="scripture-stage" id="scriptureStage">
-                <div class="scripture-card">
-                    <div class="scripture-ref" id="scriptureRef">Loading...</div>
-                    <div class="scripture-text" id="scriptureText">Loading...</div>
-                </div>
-            </div>
+      </div>
+      <div class="orange-bg"></div>
+      <div class="title-bar-wrapper">
+        <div class="title-bar">
+          <h2>Repentance & Holiness</h2>
         </div>
-
+      </div>
+      <div class="main-banner-wrapper">
+        <div class="main-banner">
+          <h1 id="mainBannerText"></h1>
+        </div>
+      </div>
+      <div class="bottom-track-holder">
+        <div class="bottom-bar-bg"></div>
+        <div class="scroll-wrapper">
+          <div class="scrolling-text" id="scrollContainer"></div>
+        </div>
+        <div class="time-tag">
+          <span id="dateDisplay">24 December 2026</span>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        /* ============================================================== */
-        /* MASTER CONTROLLER - ALTERNATING LOOP */
-        /* ============================================================== */
+  <!-- MODULE 2: SCRIPTURE VIEW -->
+  <div class="broadcast-module scripture-wrapper" id="scriptureContainer">
+    <div class="scripture-stage" id="scriptureStage">
+      <div class="scripture-card">
+        <div class="scripture-ref" id="scriptureRef">Loading...</div>
+        <div class="scripture-text" id="scriptureText">Loading...</div>
+      </div>
+    </div>
+  </div>
 
-        // --- ELEMENTS ---
-        const lowerThirdContainer = document.getElementById('lowerThirdContainer');
-        const lowerThirdModule = document.getElementById('mainLowerThird');
-        const dateDisplay = document.getElementById('dateDisplay');
-        const scrollContainer = document.getElementById('scrollContainer');
+  <!-- MODULE 3: SPEAKER LOWER THIRD -->
+  <div class="broadcast-module speaker-wrapper" id="speakerContainer">
+    <div class="speaker-module" id="speakerModule">
+      <div class="speaker-orange-bg"></div>
+      <div class="speaker-role-wrapper">
+        <div class="speaker-role-bar">
+          <span>NOW MINISTERING</span>
+        </div>
+      </div>
+      <div class="speaker-name-wrapper">
+        <div class="speaker-name-banner">
+          <span>Bishop Jason</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        const scriptureContainer = document.getElementById('scriptureContainer');
-        const scriptureStage = document.getElementById('scriptureStage');
-        const refEl = document.getElementById('scriptureRef');
-        const textEl = document.getElementById('scriptureText');
+</div>
 
-        // --- LOWER THIRD DATA ---
-        const scrollMessages = [
-            "For more information please contact Bishop Dr.JJ on 0700727435",
-            "repentandpreparetheway.org",
-            "City Mega Church Livestream",
-            "God Bless You",
-            "Thank you for watching"
-        ];
-        const textContent = scrollMessages.join(' • ');
+<script>
+  (function() {
+    // ---------- DOM ELEMENTS ----------
+    const lowerThirdContainer = document.getElementById('lowerThirdContainer');
+    const lowerThirdModule = document.getElementById('mainLowerThird');
+    const mainBannerText = document.getElementById('mainBannerText');
+    const dateDisplay = document.getElementById('dateDisplay');
+    const scrollContainer = document.getElementById('scrollContainer');
 
-        // --- SCRIPTURE DATA ---
-        const verses = [
-            { ref: "John 3:15", text: "That whoever believes in him may have eternal life." },
-            { ref: "John 3:16", text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
-            { ref: "John 3:17", text: "For God did not send his Son into the world to condemn the world, but to save the world through him." }
-        ];
+    const scriptureContainer = document.getElementById('scriptureContainer');
+    const scriptureStage = document.getElementById('scriptureStage');
+    const refEl = document.getElementById('scriptureRef');
+    const textEl = document.getElementById('scriptureText');
 
-        // --- LOWER THIRD VARIABLES ---
-        let ltAnimationId = null;
-        let ltScrollPos = 0;
-        const ltSpeed = 0.5;
+    const speakerContainer = document.getElementById('speakerContainer');
+    const speakerModule = document.getElementById('speakerModule');
 
-        // --- SCRIPTURE VARIABLES ---
-        let stTimeoutId = null;
-        let stTypeInterval = null;
+    // ---------- DATA ----------
+    const scrollMessages = [
+      "For more information please contact Bishop Dr.JJ on 0700727435",
+      "repentandpreparetheway.org",
+      "City Mega Church Livestream",
+      "God Bless You",
+      "Thank you for watching"
+    ];
+    const textContent = scrollMessages.join(' • ');
 
-        // ================================================================ //
-        //  LOWER THIRD FUNCTIONS                                            //
-        // ================================================================ //
+    const verses = [
+      { ref: "John 3:15", text: "That whoever believes in him may have eternal life." },
+      { ref: "John 3:16", text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
+      { ref: "John 3:17", text: "For God did not send his Son into the world to condemn the world, but to save the world through him." }
+    ];
 
-        function updateDate() {
-            const now = new Date();
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            dateDisplay.textContent = now.toLocaleDateString('en-GB', options);
+    // ---------- VARIABLES ----------
+    let ltAnimationId = null;
+    let ltScrollPos = 0;
+    const ltSpeed = 0.5;
+    let letterInterval = null;
+    let stTimeoutId = null;
+    let stTypeInterval = null;
+
+    // ========== TYPEWRITER FOR MAIN BANNER ==========
+    function setupBannerText(element, text) {
+      element.innerHTML = '';
+      for (let i = 0; i < text.length; i++) {
+        const span = document.createElement('span');
+        span.className = 'typewriter-letter';
+        span.textContent = text[i] === ' ' ? '\u00A0' : text[i];
+        element.appendChild(span);
+      }
+    }
+
+    function typeBannerText(element, text, callback) {
+      setupBannerText(element, text);
+      const letters = element.querySelectorAll('.typewriter-letter');
+      let index = 0;
+      if (letterInterval) clearInterval(letterInterval);
+      letterInterval = setInterval(() => {
+        if (index < letters.length) {
+          letters[index].classList.add('visible');
+          index++;
+        } else {
+          clearInterval(letterInterval);
+          if (callback) callback();
         }
+      }, 30);
+    }
 
-        function setupSeamlessScroll() {
-            const textWithSpacing = textContent + ' • ' + textContent;
-            scrollContainer.textContent = textWithSpacing;
-            setTimeout(() => {
-                const textWidth = scrollContainer.scrollWidth / 2;
-                if (ltAnimationId) cancelAnimationFrame(ltAnimationId);
-                ltScrollPos = 0;
-                function animateScroll() {
-                    ltScrollPos -= ltSpeed;
-                    if (Math.abs(ltScrollPos) >= textWidth) ltScrollPos = 0;
-                    scrollContainer.style.transform = `translateX(${ltScrollPos}px)`;
-                    ltAnimationId = requestAnimationFrame(animateScroll);
-                }
-                animateScroll();
-            }, 50);
+    function clearBannerText(element) {
+      if (letterInterval) clearInterval(letterInterval);
+      element.innerHTML = '';
+    }
+
+    // ========== LOWER THIRD FUNCTIONS ==========
+    function updateDate() {
+      const now = new Date();
+      const options = { day: 'numeric', month: 'long', year: 'numeric' };
+      dateDisplay.textContent = now.toLocaleDateString('en-GB', options);
+    }
+
+    function setupSeamlessScroll() {
+      const textWithSpacing = textContent + ' • ' + textContent;
+      scrollContainer.textContent = textWithSpacing;
+      setTimeout(() => {
+        const textWidth = scrollContainer.scrollWidth / 2;
+        if (ltAnimationId) cancelAnimationFrame(ltAnimationId);
+        ltScrollPos = 0;
+        function animateScroll() {
+          ltScrollPos -= ltSpeed;
+          if (Math.abs(ltScrollPos) >= textWidth) ltScrollPos = 0;
+          scrollContainer.style.transform = `translateX(${ltScrollPos}px)`;
+          ltAnimationId = requestAnimationFrame(animateScroll);
         }
+        animateScroll();
+      }, 50);
+    }
 
-        function pauseScroll() {
-            if (ltAnimationId) { cancelAnimationFrame(ltAnimationId); ltAnimationId = null; }
+    function pauseScroll() {
+      if (ltAnimationId) { cancelAnimationFrame(ltAnimationId); ltAnimationId = null; }
+    }
+
+    function showLowerThird() {
+      lowerThirdContainer.classList.add('visible');
+      lowerThirdContainer.classList.remove('hidden');
+      lowerThirdModule.classList.remove('outro');
+      lowerThirdModule.classList.add('active');
+      
+      // Typewriter animation for main banner text
+      typeBannerText(mainBannerText, 'CITY MEGA CHURCH SUNDAY SERVICE', () => {
+        // Typing complete
+      });
+
+      setTimeout(() => { setupSeamlessScroll(); }, 400);
+
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          lowerThirdModule.classList.remove('active');
+          lowerThirdModule.classList.add('outro');
+          pauseScroll();
+          clearBannerText(mainBannerText);
+
+          setTimeout(() => {
+            lowerThirdContainer.classList.remove('visible');
+            lowerThirdContainer.classList.add('hidden');
+            lowerThirdModule.classList.remove('active', 'outro');
+            resolve();
+          }, 1500);
+        }, 30000);
+      });
+    }
+
+    // ========== SCRIPTURE FUNCTIONS ==========
+    function setupText(element, textContent) {
+      element.innerHTML = '';
+      for (let i = 0; i < textContent.length; i++) {
+        const span = document.createElement('span');
+        span.className = 'typewriter-letter';
+        span.textContent = textContent[i] === ' ' ? '\u00A0' : textContent[i];
+        element.appendChild(span);
+      }
+    }
+
+    function typeText(element, textContent, callback) {
+      setupText(element, textContent);
+      const letters = element.querySelectorAll('.typewriter-letter');
+      let index = 0;
+      if(stTypeInterval) clearInterval(stTypeInterval);
+      stTypeInterval = setInterval(() => {
+        if (index < letters.length) {
+          letters[index].classList.add('visible');
+          index++;
+        } else {
+          clearInterval(stTypeInterval);
+          if (callback) callback();
         }
+      }, 30);
+    }
 
-        function showLowerThird() {
-            lowerThirdContainer.classList.add('visible');
-            lowerThirdContainer.classList.remove('hidden');
-            lowerThirdModule.classList.remove('outro');
-            lowerThirdModule.classList.add('active');
-            
-            setTimeout(() => { setupSeamlessScroll(); }, 400);
-
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    lowerThirdModule.classList.remove('active');
-                    lowerThirdModule.classList.add('outro');
-                    pauseScroll();
-
-                    setTimeout(() => {
-                        lowerThirdContainer.classList.remove('visible');
-                        lowerThirdContainer.classList.add('hidden');
-                        lowerThirdModule.classList.remove('active', 'outro');
-                        resolve();
-                    }, 1500);
-                }, 30000);
-            });
+    function deleteHeading(callback) {
+      const letters = refEl.querySelectorAll('.typewriter-letter');
+      let index = letters.length - 1;
+      function removeNext() {
+        if (index >= 0) {
+          letters[index].classList.remove('visible');
+          index--;
+          setTimeout(removeNext, 50);
+        } else {
+          if (callback) callback();
         }
+      }
+      removeNext();
+    }
 
-        // ================================================================ //
-        //  SCRIPTURE FUNCTIONS                                             //
-        // ================================================================ //
+    function showScripture() {
+      scriptureContainer.classList.add('visible');
+      scriptureContainer.classList.remove('hidden');
 
-        function setupText(element, textContent) {
-            element.innerHTML = '';
-            for (let i = 0; i < textContent.length; i++) {
-                const span = document.createElement('span');
-                span.className = 'typewriter-letter';
-                span.textContent = textContent[i] === ' ' ? '\u00A0' : textContent[i];
-                element.appendChild(span);
-            }
-        }
+      return new Promise((resolve) => {
+        scriptureStage.classList.remove('box-outro');
+        scriptureStage.classList.add('box-intro');
 
-        function typeText(element, textContent, callback) {
-            setupText(element, textContent);
-            const letters = element.querySelectorAll('.typewriter-letter');
-            let index = 0;
-            if(stTypeInterval) clearInterval(stTypeInterval);
-            stTypeInterval = setInterval(() => {
-                if (index < letters.length) {
-                    letters[index].classList.add('visible');
-                    index++;
-                } else {
-                    clearInterval(stTypeInterval);
-                    if (callback) callback();
-                }
-            }, 30);
-        }
-
-        function deleteHeading(callback) {
-            const letters = refEl.querySelectorAll('.typewriter-letter');
-            let index = letters.length - 1;
-            function removeNext() {
-                if (index >= 0) {
-                    letters[index].classList.remove('visible');
-                    index--;
-                    setTimeout(removeNext, 50);
-                } else {
-                    if (callback) callback();
-                }
-            }
-            removeNext();
-        }
-
-        function showScripture() {
-            scriptureContainer.classList.add('visible');
-            scriptureContainer.classList.remove('hidden');
-
-            return new Promise((resolve) => {
-                scriptureStage.classList.remove('box-outro');
-                scriptureStage.classList.add('box-intro');
-
-                setTimeout(() => {
-                    const verse1 = verses[0];
-                    typeText(refEl, verse1.ref, () => {
-                        typeText(textEl, verse1.text, () => {
-                            stTimeoutId = setTimeout(() => {
+        setTimeout(() => {
+          const verse1 = verses[0];
+          typeText(refEl, verse1.ref, () => {
+            typeText(textEl, verse1.text, () => {
+              stTimeoutId = setTimeout(() => {
+                scriptureStage.classList.add('text-fade-out');
+                stTimeoutId = setTimeout(() => {
+                  scriptureStage.classList.remove('text-fade-out');
+                  const verse2 = verses[1];
+                  typeText(refEl, verse2.ref, () => {
+                    typeText(textEl, verse2.text, () => {
+                      stTimeoutId = setTimeout(() => {
+                        scriptureStage.classList.add('text-fade-out');
+                        stTimeoutId = setTimeout(() => {
+                          scriptureStage.classList.remove('text-fade-out');
+                          const verse3 = verses[2];
+                          typeText(refEl, verse3.ref, () => {
+                            typeText(textEl, verse3.text, () => {
+                              stTimeoutId = setTimeout(() => {
                                 scriptureStage.classList.add('text-fade-out');
                                 stTimeoutId = setTimeout(() => {
-                                    scriptureStage.classList.remove('text-fade-out');
-                                    const verse2 = verses[1];
-                                    typeText(refEl, verse2.ref, () => {
-                                        typeText(textEl, verse2.text, () => {
-                                            stTimeoutId = setTimeout(() => {
-                                                scriptureStage.classList.add('text-fade-out');
-                                                stTimeoutId = setTimeout(() => {
-                                                    scriptureStage.classList.remove('text-fade-out');
-                                                    const verse3 = verses[2];
-                                                    typeText(refEl, verse3.ref, () => {
-                                                        typeText(textEl, verse3.text, () => {
-                                                            stTimeoutId = setTimeout(() => {
-                                                                scriptureStage.classList.add('text-fade-out');
-                                                                stTimeoutId = setTimeout(() => {
-                                                                    deleteHeading(() => {
-                                                                        stTimeoutId = setTimeout(() => {
-                                                                            scriptureStage.classList.remove('box-intro');
-                                                                            scriptureStage.classList.add('box-outro');
-                                                                            stTimeoutId = setTimeout(() => {
-                                                                                scriptureContainer.classList.remove('visible');
-                                                                                scriptureContainer.classList.add('hidden');
-                                                                                resolve();
-                                                                            }, 1200);
-                                                                        }, 400);
-                                                                    });
-                                                                }, 400);
-                                                            }, 4000);
-                                                        });
-                                                    });
-                                                }, 400);
-                                            }, 4000);
-                                        });
-                                    });
+                                  deleteHeading(() => {
+                                    stTimeoutId = setTimeout(() => {
+                                      scriptureStage.classList.remove('box-intro');
+                                      scriptureStage.classList.add('box-outro');
+                                      stTimeoutId = setTimeout(() => {
+                                        scriptureContainer.classList.remove('visible');
+                                        scriptureContainer.classList.add('hidden');
+                                        resolve();
+                                      }, 1200);
+                                    }, 400);
+                                  });
                                 }, 400);
-                            }, 4000);
-                        });
+                              }, 4000);
+                            });
+                          });
+                        }, 400);
+                      }, 4000);
                     });
-                }, 150);
+                  });
+                }, 400);
+              }, 4000);
             });
-        }
+          });
+        }, 150);
+      });
+    }
 
-        // ================================================================ //
-        //  MASTER ALTERNATING LOOP                                         //
-        // ================================================================ //
+    // ========== SPEAKER LOWER THIRD ==========
+    function showSpeakerLowerThird() {
+      speakerContainer.classList.add('visible');
+      speakerContainer.classList.remove('hidden');
+      speakerModule.classList.remove('outro');
+      speakerModule.classList.add('active');
 
-        async function masterLoop() {
-            while (true) {
-                updateDate();
-                await showLowerThird();
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                await showScripture();
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-        }
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          speakerModule.classList.remove('active');
+          speakerModule.classList.add('outro');
+          
+          setTimeout(() => {
+            speakerContainer.classList.remove('visible');
+            speakerContainer.classList.add('hidden');
+            speakerModule.classList.remove('active', 'outro');
+            resolve();
+          }, 1500);
+        }, 8000);
+      });
+    }
 
-        masterLoop();
-    </script>
+    // ========== MASTER LOOP ==========
+    async function masterLoop() {
+      while (true) {
+        updateDate();
+        await showLowerThird();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await showScripture();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await showSpeakerLowerThird();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+
+    masterLoop();
+  })();
+</script>
 </body>
 </html>
