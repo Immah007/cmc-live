@@ -20,6 +20,39 @@
             color: #e0e0e0;
         }
 
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #fbad18;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #ffffff;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -201,6 +234,17 @@
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
 
+        .btn-nav {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            font-size: 16px;
+        }
+
+        .btn-nav:hover {
+            background: rgba(139, 92, 246, 0.3);
+        }
+
         .button-group {
             display: flex;
             gap: 10px;
@@ -212,6 +256,21 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
+        }
+
+        .nav-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .verse-indicator {
+            text-align: center;
+            color: #a0aec0;
+            font-size: 14px;
+            min-width: 80px;
         }
 
         .preview-box {
@@ -250,23 +309,6 @@
             font-weight: 700;
         }
 
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-
-        .status-active {
-            background: #34d399;
-            box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
-        }
-
-        .status-inactive {
-            background: #6b7280;
-        }
-
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -278,6 +320,12 @@
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Bible Data...</div>
+    </div>
+
     <div class="container">
         <!-- Lower Third Control Panel -->
         <div class="panel">
@@ -318,7 +366,7 @@
                     📝 Update & Show
                 </button>
                 <button class="btn btn-show" id="ltToggleBtn" onclick="toggleLowerThird()">
-                    👁️ Show/Hide
+                    👁️ Hide
                 </button>
             </div>
         </div>
@@ -331,30 +379,34 @@
             </h2>
             <div class="select-group">
                 <div class="form-group">
-                    <label>Version</label>
-                    <select id="scriptureVersion" onchange="onVersionChange()">
-                        <option value="john">John (NIV)</option>
+                    <label>Book</label>
+                    <select id="scriptureBook" onchange="onBookChange()">
+                        <option value="">Loading...</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Chapter</label>
                     <select id="scriptureChapter" onchange="onChapterChange()">
-                        <option value="3">Chapter 3</option>
+                        <option value="">Select chapter</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Verse</label>
                     <select id="scriptureVerse" onchange="onVerseChange()">
-                        <option value="15">Verse 15</option>
-                        <option value="16">Verse 16</option>
-                        <option value="17">Verse 17</option>
+                        <option value="">Select verse</option>
                     </select>
                 </div>
             </div>
 
+            <div class="nav-group">
+                <button class="btn btn-nav" onclick="previousVerse()" title="Previous Verse">◀ Prev</button>
+                <span class="verse-indicator" id="verseIndicator">-</span>
+                <button class="btn btn-nav" onclick="nextVerse()" title="Next Verse">Next ▶</button>
+            </div>
+
             <div class="preview-box" id="scripturePreview">
-                <div class="verse-ref">John 3:16</div>
-                <div class="verse-text">For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.</div>
+                <div class="verse-ref">Select a verse</div>
+                <div class="verse-text">Choose a book, chapter, and verse to preview</div>
             </div>
 
             <div class="button-group">
@@ -395,25 +447,306 @@
     <script>
         // ========== SOCKET.IO CONNECTION ==========
         const socket = io();
-        
-        socket.on('connect', () => {
-            console.log('Connected to broadcast server');
-        });
 
-        socket.on('disconnect', () => {
-            console.log('Disconnected from broadcast server');
-        });
+        // ========== BIBLE DATA STORE ==========
+        let bibleData = null;
+        let currentBookIndex = 0;
+        let currentChapterIndex = 0;
+        let currentVerseIndex = 0;
 
-        // ========== SCRIPTURE DATA ==========
-        const scriptureData = {
-            john: {
-                3: {
-                    15: "That whoever believes in him may have eternal life.",
-                    16: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
-                    17: "For God did not send his Son into the world to condemn the world, but to save the world through him."
+        // ========== LOADING ==========
+        async function loadBibleData() {
+            try {
+                const response = await fetch('/api/bible');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Bible data');
                 }
+                bibleData = await response.json();
+                console.log('📖 Bible data loaded:', bibleData.name);
+                
+                // Populate book dropdown
+                populateBooks();
+                
+                // Hide loading overlay
+                document.getElementById('loadingOverlay').style.display = 'none';
+            } catch (error) {
+                console.error('❌ Error loading Bible data:', error);
+                document.querySelector('.loading-text').textContent = 'Error loading Bible data. Please refresh.';
             }
-        };
+        }
+
+        function populateBooks() {
+            const bookSelect = document.getElementById('scriptureBook');
+            bookSelect.innerHTML = '';
+            
+            if (!bibleData || !bibleData.books) return;
+            
+            bibleData.books.forEach((book, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${book.englishName} (${book.book})`;
+                bookSelect.appendChild(option);
+            });
+            
+            // Set default to John (usually index 42)
+            const johnIndex = bibleData.books.findIndex(b => b.book === 'John');
+            if (johnIndex >= 0) {
+                bookSelect.value = johnIndex;
+                currentBookIndex = johnIndex;
+                onBookChange();
+            }
+        }
+
+        // ========== SCRIPTURE NAVIGATION ==========
+        function onBookChange() {
+            const bookSelect = document.getElementById('scriptureBook');
+            const chapterSelect = document.getElementById('scriptureChapter');
+            const verseSelect = document.getElementById('scriptureVerse');
+            
+            currentBookIndex = parseInt(bookSelect.value);
+            chapterSelect.innerHTML = '';
+            verseSelect.innerHTML = '<option value="">Select verse</option>';
+            
+            if (isNaN(currentBookIndex) || !bibleData) return;
+            
+            const book = bibleData.books[currentBookIndex];
+            book.chapters.forEach((chapter, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Chapter ${chapter.chapter}`;
+                chapterSelect.appendChild(option);
+            });
+            
+            // Default to chapter 3 if available
+            const chapter3Index = book.chapters.findIndex(c => c.chapter === 3);
+            if (chapter3Index >= 0) {
+                chapterSelect.value = chapter3Index;
+                currentChapterIndex = chapter3Index;
+            } else {
+                chapterSelect.value = 0;
+                currentChapterIndex = 0;
+            }
+            
+            onChapterChange();
+        }
+
+        function onChapterChange() {
+            const chapterSelect = document.getElementById('scriptureChapter');
+            const verseSelect = document.getElementById('scriptureVerse');
+            
+            currentChapterIndex = parseInt(chapterSelect.value);
+            verseSelect.innerHTML = '';
+            
+            if (isNaN(currentChapterIndex) || !bibleData) return;
+            
+            const book = bibleData.books[currentBookIndex];
+            const chapter = book.chapters[currentChapterIndex];
+            
+            chapter.verses.forEach((verse, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Verse ${verse.number}`;
+                verseSelect.appendChild(option);
+            });
+            
+            // Default to first verse
+            verseSelect.value = 0;
+            currentVerseIndex = 0;
+            
+            onVerseChange();
+        }
+
+        function onVerseChange() {
+            const verseSelect = document.getElementById('scriptureVerse');
+            currentVerseIndex = parseInt(verseSelect.value);
+            
+            if (isNaN(currentVerseIndex) || !bibleData) return;
+            
+            updateScripturePreview();
+            updateVerseIndicator();
+        }
+
+        function updateScripturePreview() {
+            const preview = document.getElementById('scripturePreview');
+            const refEl = preview.querySelector('.verse-ref');
+            const textEl = preview.querySelector('.verse-text');
+            
+            if (!bibleData || isNaN(currentBookIndex) || isNaN(currentChapterIndex) || isNaN(currentVerseIndex)) {
+                refEl.textContent = 'Select a verse';
+                textEl.textContent = 'Choose a book, chapter, and verse to preview';
+                return;
+            }
+            
+            const book = bibleData.books[currentBookIndex];
+            const chapter = book.chapters[currentChapterIndex];
+            const verse = chapter.verses[currentVerseIndex];
+            
+            refEl.textContent = `${book.englishName} ${chapter.chapter}:${verse.number}`;
+            textEl.textContent = verse.text;
+        }
+
+        function updateVerseIndicator() {
+            const indicator = document.getElementById('verseIndicator');
+            if (!bibleData || isNaN(currentBookIndex) || isNaN(currentChapterIndex) || isNaN(currentVerseIndex)) {
+                indicator.textContent = '-';
+                return;
+            }
+            
+            const book = bibleData.books[currentBookIndex];
+            const chapter = book.chapters[currentChapterIndex];
+            const verse = chapter.verses[currentVerseIndex];
+            indicator.textContent = `${book.book} ${chapter.chapter}:${verse.number}`;
+        }
+
+        function previousVerse() {
+            if (!bibleData) return;
+            
+            const book = bibleData.books[currentBookIndex];
+            const chapter = book.chapters[currentChapterIndex];
+            
+            if (currentVerseIndex > 0) {
+                currentVerseIndex--;
+            } else if (currentChapterIndex > 0) {
+                // Go to last verse of previous chapter
+                currentChapterIndex--;
+                const prevChapter = book.chapters[currentChapterIndex];
+                currentVerseIndex = prevChapter.verses.length - 1;
+                document.getElementById('scriptureChapter').value = currentChapterIndex;
+            } else if (currentBookIndex > 0) {
+                // Go to last verse of last chapter of previous book
+                currentBookIndex--;
+                const prevBook = bibleData.books[currentBookIndex];
+                currentChapterIndex = prevBook.chapters.length - 1;
+                currentVerseIndex = prevBook.chapters[currentChapterIndex].verses.length - 1;
+                
+                document.getElementById('scriptureBook').value = currentBookIndex;
+                document.getElementById('scriptureChapter').value = currentChapterIndex;
+                populateChapterVerses();
+            } else {
+                return; // At the very beginning
+            }
+            
+            document.getElementById('scriptureVerse').value = currentVerseIndex;
+            updateScripturePreview();
+            updateVerseIndicator();
+            
+            // If scripture is currently showing, update it live
+            const scriptureBtn = document.getElementById('scriptureToggleBtn');
+            if (scriptureBtn.classList.contains('active')) {
+                sendScriptureToBroadcast();
+            }
+        }
+
+        function nextVerse() {
+            if (!bibleData) return;
+            
+            const book = bibleData.books[currentBookIndex];
+            const chapter = book.chapters[currentChapterIndex];
+            
+            if (currentVerseIndex < chapter.verses.length - 1) {
+                currentVerseIndex++;
+            } else if (currentChapterIndex < book.chapters.length - 1) {
+                // Go to first verse of next chapter
+                currentChapterIndex++;
+                currentVerseIndex = 0;
+                document.getElementById('scriptureChapter').value = currentChapterIndex;
+            } else if (currentBookIndex < bibleData.books.length - 1) {
+                // Go to first verse of first chapter of next book
+                currentBookIndex++;
+                currentChapterIndex = 0;
+                currentVerseIndex = 0;
+                
+                document.getElementById('scriptureBook').value = currentBookIndex;
+                document.getElementById('scriptureChapter').value = currentChapterIndex;
+                populateChapterVerses();
+            } else {
+                return; // At the very end
+            }
+            
+            document.getElementById('scriptureVerse').value = currentVerseIndex;
+            updateScripturePreview();
+            updateVerseIndicator();
+            
+            // If scripture is currently showing, update it live
+            const scriptureBtn = document.getElementById('scriptureToggleBtn');
+            if (scriptureBtn.classList.contains('active')) {
+                sendScriptureToBroadcast();
+            }
+        }
+
+        function populateChapterVerses() {
+            const chapterSelect = document.getElementById('scriptureChapter');
+            const verseSelect = document.getElementById('scriptureVerse');
+            
+            chapterSelect.innerHTML = '';
+            verseSelect.innerHTML = '';
+            
+            const book = bibleData.books[currentBookIndex];
+            book.chapters.forEach((chapter, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Chapter ${chapter.chapter}`;
+                chapterSelect.appendChild(option);
+            });
+            
+            chapterSelect.value = currentChapterIndex;
+            
+            const chapter = book.chapters[currentChapterIndex];
+            chapter.verses.forEach((verse, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Verse ${verse.number}`;
+                verseSelect.appendChild(option);
+            });
+            
+            verseSelect.value = currentVerseIndex;
+        }
+
+        function getCurrentScriptureRef() {
+            if (!bibleData) return '';
+            const book = bibleData.books[currentBookIndex];
+            const chapter = book.chapters[currentChapterIndex];
+            const verse = chapter.verses[currentVerseIndex];
+            return `${book.englishName} ${chapter.chapter}:${verse.number}`;
+        }
+
+        function getCurrentScriptureText() {
+            if (!bibleData) return '';
+            const book = bibleData.books[currentBookIndex];
+            const chapter = book.chapters[currentChapterIndex];
+            const verse = chapter.verses[currentVerseIndex];
+            return verse.text;
+        }
+
+        function sendScriptureToBroadcast() {
+            const ref = getCurrentScriptureRef();
+            const text = getCurrentScriptureText();
+            
+            socket.emit('showScripture', {
+                ref: ref,
+                text: text
+            });
+        }
+
+        function toggleScripture() {
+            const btn = document.getElementById('scriptureToggleBtn');
+            const isActive = btn.classList.contains('active');
+
+            if (isActive) {
+                socket.emit('hideScripture');
+                btn.classList.remove('active');
+                btn.textContent = '📖 Show Scripture';
+            } else {
+                if (!bibleData) {
+                    alert('Bible data is still loading. Please wait.');
+                    return;
+                }
+                
+                sendScriptureToBroadcast();
+                btn.classList.add('active');
+                btn.textContent = '📖 Hide Scripture';
+            }
+        }
 
         // ========== LOWER THIRD CONTROLS ==========
         function addMessage() {
@@ -450,12 +783,9 @@
                 scrollMessages: scrollMessages
             });
 
-            // Auto show when updated
             const toggleBtn = document.getElementById('ltToggleBtn');
-            if (!toggleBtn.classList.contains('active')) {
-                toggleBtn.classList.add('active');
-                toggleBtn.textContent = '👁️ Hide';
-            }
+            toggleBtn.classList.add('active');
+            toggleBtn.textContent = '👁️ Hide';
         }
 
         function toggleLowerThird() {
@@ -467,97 +797,7 @@
                 btn.classList.remove('active');
                 btn.textContent = '👁️ Show';
             } else {
-                // Update with current values before showing
                 updateLowerThird();
-                btn.classList.add('active');
-                btn.textContent = '👁️ Hide';
-            }
-        }
-
-        // ========== SCRIPTURE CONTROLS ==========
-        function onVersionChange() {
-            const version = document.getElementById('scriptureVersion').value;
-            const chapterSelect = document.getElementById('scriptureChapter');
-            
-            // Clear and repopulate chapters
-            chapterSelect.innerHTML = '';
-            if (scriptureData[version]) {
-                Object.keys(scriptureData[version]).forEach(chapter => {
-                    const option = document.createElement('option');
-                    option.value = chapter;
-                    option.textContent = `Chapter ${chapter}`;
-                    chapterSelect.appendChild(option);
-                });
-            }
-            
-            onChapterChange();
-        }
-
-        function onChapterChange() {
-            const version = document.getElementById('scriptureVersion').value;
-            const chapter = document.getElementById('scriptureChapter').value;
-            const verseSelect = document.getElementById('scriptureVerse');
-            
-            verseSelect.innerHTML = '';
-            if (scriptureData[version] && scriptureData[version][chapter]) {
-                Object.keys(scriptureData[version][chapter]).forEach(verse => {
-                    const option = document.createElement('option');
-                    option.value = verse;
-                    option.textContent = `Verse ${verse}`;
-                    verseSelect.appendChild(option);
-                });
-            }
-            
-            onVerseChange();
-        }
-
-        function onVerseChange() {
-            const version = document.getElementById('scriptureVersion').value;
-            const chapter = document.getElementById('scriptureChapter').value;
-            const verse = document.getElementById('scriptureVerse').value;
-            
-            updateScripturePreview(version, chapter, verse);
-        }
-
-        function updateScripturePreview(version, chapter, verse) {
-            const preview = document.getElementById('scripturePreview');
-            const refEl = preview.querySelector('.verse-ref');
-            const textEl = preview.querySelector('.verse-text');
-            
-            const versionNames = { john: 'John' };
-            const versionName = versionNames[version] || version;
-            refEl.textContent = `${versionName} ${chapter}:${verse}`;
-            
-            if (scriptureData[version] && scriptureData[version][chapter] && scriptureData[version][chapter][verse]) {
-                textEl.textContent = scriptureData[version][chapter][verse];
-            } else {
-                textEl.textContent = 'Select a verse to preview';
-            }
-        }
-
-        function toggleScripture() {
-            const btn = document.getElementById('scriptureToggleBtn');
-            const isActive = btn.classList.contains('active');
-
-            if (isActive) {
-                socket.emit('hideScripture');
-                btn.classList.remove('active');
-                btn.textContent = '📖 Show Scripture';
-            } else {
-                const version = document.getElementById('scriptureVersion').value;
-                const chapter = document.getElementById('scriptureChapter').value;
-                const verse = document.getElementById('scriptureVerse').value;
-                
-                const versionNames = { john: 'John' };
-                const versionName = versionNames[version] || version;
-                
-                socket.emit('showScripture', {
-                    ref: `${versionName} ${chapter}:${verse}`,
-                    text: scriptureData[version][chapter][verse]
-                });
-
-                btn.classList.add('active');
-                btn.textContent = '📖 Hide Scripture';
             }
         }
 
@@ -571,7 +811,6 @@
             preview.querySelector('.speaker-name').textContent = name || 'Speaker Name';
         }
 
-        // Live preview update
         document.getElementById('speakerRole').addEventListener('input', updateSpeakerPreview);
         document.getElementById('speakerName').addEventListener('input', updateSpeakerPreview);
 
@@ -598,27 +837,38 @@
         }
 
         // ========== SOCKET EVENT LISTENERS ==========
+        socket.on('connect', () => {
+            console.log('✅ Connected to broadcast server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('🔌 Disconnected from broadcast server');
+        });
+
         socket.on('speakerAutoHidden', () => {
             const btn = document.getElementById('speakerToggleBtn');
             btn.classList.remove('active');
             btn.textContent = '🎤 Show Speaker';
         });
 
-        socket.on('lowerThirdHidden', () => {
-            const btn = document.getElementById('ltToggleBtn');
-            btn.classList.remove('active');
-            btn.textContent = '👁️ Show';
+        socket.on('currentState', (state) => {
+            console.log('📡 Received current state:', state);
+            
+            // Update lower third toggle button based on state
+            const ltBtn = document.getElementById('ltToggleBtn');
+            if (state.lowerThirdToggleState) {
+                ltBtn.classList.add('active');
+                ltBtn.textContent = '👁️ Hide';
+            } else {
+                ltBtn.classList.remove('active');
+                ltBtn.textContent = '👁️ Show';
+            }
         });
 
-        socket.on('scriptureHidden', () => {
-            const btn = document.getElementById('scriptureToggleBtn');
-            btn.classList.remove('active');
-            btn.textContent = '📖 Show Scripture';
-        });
-
-        // Initialize previews
-        updateScripturePreview('john', '3', '16');
+        // ========== INITIALIZATION ==========
+        loadBibleData();
         updateSpeakerPreview();
+        updateVerseIndicator();
     </script>
 </body>
 </html>
