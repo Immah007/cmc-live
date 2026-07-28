@@ -258,7 +258,7 @@
       opacity: 0;
     }
 
-    /* MAIN BANNER TEXT - RESTORED EXACT ORIGINAL STYLE */
+    /* MAIN BANNER TEXT */
     .main-banner h1 {
       color: #000000;
       font-size: 22px;
@@ -419,7 +419,7 @@
     @keyframes fadeIn { 0% { opacity: 0; transform: skewX(32deg) translateY(5px); } 100% { opacity: 1; transform: skewX(32deg) translateY(0); } }
 
     /* ============================================================== */
-    /* MODULE 2: SCRIPTURE VIEW (ELEMENT CENTERED, TEXT LEFT-ALIGNED) */
+    /* MODULE 2: SCRIPTURE VIEW */
     /* ============================================================== */
     .scripture-wrapper {
       font-family: 'Inter', sans-serif;
@@ -500,7 +500,7 @@
     }
 
     /* ============================================================== */
-    /* MODULE 3: SPEAKER LOWER THIRD (SHORTER, MATCHES MAIN DESIGN) */
+    /* MODULE 3: SPEAKER LOWER THIRD */
     /* ============================================================== */
     .speaker-wrapper {
       font-family: 'Poppins', sans-serif;
@@ -725,6 +725,9 @@
       ]
     };
 
+    // ========== STATE ==========
+    let lowerThirdToggleState = true; // User wants lower third visible
+
     // ========== VARIABLES ==========
     let ltAnimationId = null;
     let ltScrollPos = 0;
@@ -947,6 +950,11 @@
       console.log('🔌 Disconnected from broadcast server');
     });
 
+    socket.on('currentState', (state) => {
+      console.log('📡 Received current state:', state);
+      lowerThirdToggleState = state.lowerThirdToggleState;
+    });
+
     socket.on('updateLowerThird', async (data) => {
       console.log('📺 Update Lower Third:', data);
       
@@ -959,6 +967,8 @@
         await hideSpeaker();
       }
 
+      lowerThirdToggleState = true;
+
       // If lower third is already visible, hide first then show with new data
       if (lowerThirdContainer.classList.contains('visible')) {
         await hideLowerThird();
@@ -970,7 +980,27 @@
 
     socket.on('hideLowerThird', async () => {
       console.log('📺 Hide Lower Third');
+      lowerThirdToggleState = false;
       await hideLowerThird();
+    });
+
+    socket.on('showLowerThird', async () => {
+      console.log('📺 Show Lower Third');
+      lowerThirdToggleState = true;
+      
+      // Don't show if scripture or speaker is visible
+      if (scriptureContainer.classList.contains('visible') || speakerContainer.classList.contains('visible')) {
+        return;
+      }
+      
+      // Show with current data if hidden
+      if (!lowerThirdContainer.classList.contains('visible')) {
+        showLowerThird(
+          ltHeading.textContent || defaultLowerThird.heading,
+          defaultLowerThird.headline,
+          defaultLowerThird.scrollMessages
+        );
+      }
     });
 
     socket.on('showScripture', async (data) => {
@@ -986,10 +1016,11 @@
         await hideSpeaker();
       }
 
-      // If scripture is already visible, hide first then show new
+      // If scripture is already visible, just update the text
       if (scriptureContainer.classList.contains('visible')) {
-        await hideScripture();
-        await new Promise(resolve => setTimeout(resolve, 300));
+        scriptureRef.textContent = data.ref;
+        typeScriptureText(scriptureText, data.text, () => {});
+        return;
       }
 
       showScripture(data.ref, data.text);
@@ -998,6 +1029,17 @@
     socket.on('hideScripture', async () => {
       console.log('📖 Hide Scripture');
       await hideScripture();
+      
+      // Show lower third if toggle is on
+      if (lowerThirdToggleState && !speakerContainer.classList.contains('visible')) {
+        if (!lowerThirdContainer.classList.contains('visible')) {
+          showLowerThird(
+            ltHeading.textContent || defaultLowerThird.heading,
+            defaultLowerThird.headline,
+            defaultLowerThird.scrollMessages
+          );
+        }
+      }
     });
 
     socket.on('showSpeaker', async (data) => {
@@ -1020,6 +1062,20 @@
     socket.on('hideSpeaker', async () => {
       console.log('🎤 Hide Speaker');
       await hideSpeaker();
+    });
+
+    socket.on('speakerAutoHidden', () => {
+      console.log('🎤 Speaker auto-hidden');
+      // Show lower third if toggle is on and scripture is not visible
+      if (lowerThirdToggleState && !scriptureContainer.classList.contains('visible')) {
+        if (!lowerThirdContainer.classList.contains('visible')) {
+          showLowerThird(
+            ltHeading.textContent || defaultLowerThird.heading,
+            defaultLowerThird.headline,
+            defaultLowerThird.scrollMessages
+          );
+        }
+      }
     });
 
     // ========== INITIALIZATION ==========
