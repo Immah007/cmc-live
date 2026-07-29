@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   
-  <!-- Fonts for Scripture & Speaker -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+  <!-- Fonts for Scripture & Others -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
 
   <style>
     /* ============================================================== */
@@ -229,7 +229,7 @@
       height: 120px;
       transform: scale(1);
       transform-origin: center;
-      background-image: url("/images/streak1.png");
+      background-image: url("/images/streak2.png");
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -271,7 +271,6 @@
       opacity: 0;
     }
 
-    /* Typewriter letters for main banner */
     .main-banner .typewriter-letter {
       display: inline-block;
       opacity: 0;
@@ -468,6 +467,7 @@
       min-height: 150px;
       height: auto;
       width: 100%;
+      transition: min-height 0.3s ease, padding 0.3s ease;
     }
 
     .scripture-ref {
@@ -623,6 +623,91 @@
       0% { opacity: 0; transform: skewX(32deg) translateY(5px); }
       100% { opacity: 1; transform: skewX(32deg) translateY(0); }
     }
+
+    /* ============================================================== */
+    /* MODULE 4: GIVING LOWER THIRD (NEW - SIMPLE RECTANGLE) */
+    /* ============================================================== */
+    .giving-wrapper {
+      font-family: 'Inter', sans-serif;
+      width: 613px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .giving-module {
+      position: relative;
+      width: 613px;
+      min-height: 200px;
+      height: auto;
+      transition: opacity 0.4s ease-in, min-height 0.3s ease;
+    }
+
+    .giving-card {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+      padding: 20px 30px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 200px;
+      height: auto;
+      width: 100%;
+      transition: min-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .giving-content {
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      line-height: 1.6;
+      width: 100%;
+    }
+
+    /* ============================================================== */
+    /* MODULE 5: LYRICS LOWER THIRD (NEW - SIMPLE RECTANGLE) */
+    /* ============================================================== */
+    .lyrics-wrapper {
+      font-family: 'Inter', sans-serif;
+      width: 850px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .lyrics-module {
+      position: relative;
+      width: 850px;
+      min-height: 45px;
+      height: auto;
+      transition: opacity 0.4s ease-in, min-height 0.3s ease;
+    }
+
+    .lyrics-card {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+      padding: 12px 30px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 45px;
+      height: auto;
+      width: 100%;
+      transition: min-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .lyrics-content {
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      line-height: 1.5;
+      text-align: center;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -664,7 +749,7 @@
   <div class="broadcast-module scripture-wrapper" id="scriptureContainer">
     <div class="scripture-stage" id="scriptureStage">
       <div class="scripture-card">
-        <div class="scripture-ref" id="scriptureRef">John 3:16</div>
+        <div class="scripture-ref" id="scriptureRef">John 3:16 (KJV)</div>
         <div class="scripture-text" id="scriptureText"></div>
       </div>
     </div>
@@ -682,6 +767,28 @@
       <div class="speaker-name-wrapper">
         <div class="speaker-name-banner">
           <span id="speakerNameText">Bishop Jason</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 4: GIVING LOWER THIRD (HIDDEN BY DEFAULT) -->
+  <div class="broadcast-module giving-wrapper" id="givingContainer">
+    <div class="giving-module" id="givingModule">
+      <div class="giving-card">
+        <div class="giving-content" id="givingContent">
+          <!-- Content will be added manually -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 5: LYRICS LOWER THIRD (HIDDEN BY DEFAULT) -->
+  <div class="broadcast-module lyrics-wrapper" id="lyricsContainer">
+    <div class="lyrics-module" id="lyricsModule">
+      <div class="lyrics-card">
+        <div class="lyrics-content" id="lyricsContent">
+          <!-- Lyrics will appear here -->
         </div>
       </div>
     </div>
@@ -712,6 +819,12 @@
     const speakerRoleText = document.getElementById('speakerRoleText');
     const speakerNameText = document.getElementById('speakerNameText');
 
+    const givingContainer = document.getElementById('givingContainer');
+    const givingContent = document.getElementById('givingContent');
+
+    const lyricsContainer = document.getElementById('lyricsContainer');
+    const lyricsContent = document.getElementById('lyricsContent');
+
     // ========== DEFAULT DATA ==========
     const defaultLowerThird = {
       heading: 'Repentance & Holiness',
@@ -726,7 +839,8 @@
     };
 
     // ========== STATE ==========
-    let lowerThirdToggleState = true; // User wants lower third visible
+    let lowerThirdToggleState = true;
+    let currentLyricsData = { chunks: [], currentIndex: 0 };
 
     // ========== VARIABLES ==========
     let ltAnimationId = null;
@@ -795,7 +909,7 @@
       element.innerHTML = '';
     }
 
-    function setupScriptureText(element, text) {
+    function setupTypewriterText(element, text) {
       element.innerHTML = '';
       for (let i = 0; i < text.length; i++) {
         const span = document.createElement('span');
@@ -805,8 +919,8 @@
       }
     }
 
-    function typeScriptureText(element, text, callback) {
-      setupScriptureText(element, text);
+    function typeText(element, text, callback) {
+      setupTypewriterText(element, text);
       const letters = element.querySelectorAll('.typewriter-letter');
       let index = 0;
       const interval = setInterval(() => {
@@ -822,26 +936,18 @@
 
     // ========== LOWER THIRD FUNCTIONS ==========
     function showLowerThird(heading, headline, scrollMessages) {
-      // Update content
       ltHeading.textContent = heading;
       
-      // Reset animations by removing and re-adding classes
       lowerThirdModule.classList.remove('active', 'outro');
-      
-      // Force reflow
       void lowerThirdModule.offsetWidth;
       
-      // Show container
       lowerThirdContainer.classList.add('visible');
       lowerThirdContainer.classList.remove('hidden');
       
-      // Trigger intro animation
       lowerThirdModule.classList.add('active');
       
-      // Animate text
       typeBannerText(mainBannerText, headline, () => {});
       
-      // Start scroll
       setTimeout(() => { setupSeamlessScroll(scrollMessages); }, 400);
     }
 
@@ -867,8 +973,9 @@
     }
 
     // ========== SCRIPTURE FUNCTIONS ==========
-    function showScripture(ref, text) {
-      scriptureRef.textContent = ref;
+    function showScripture(ref, text, version) {
+      const versionStr = version || 'KJV';
+      scriptureRef.textContent = `${ref} (${versionStr})`;
       
       scriptureContainer.classList.add('visible');
       scriptureContainer.classList.remove('hidden');
@@ -876,8 +983,14 @@
       scriptureStage.classList.add('box-intro');
 
       setTimeout(() => {
-        typeScriptureText(scriptureText, text, () => {});
+        typeText(scriptureText, text, () => {});
       }, 150);
+    }
+
+    function updateScriptureLive(ref, text, version) {
+      const versionStr = version || 'KJV';
+      scriptureRef.textContent = `${ref} (${versionStr})`;
+      typeText(scriptureText, text, () => {});
     }
 
     function hideScripture() {
@@ -904,7 +1017,6 @@
       speakerRoleText.textContent = role;
       speakerNameText.textContent = name;
       
-      // Reset animations
       speakerModule.classList.remove('active', 'outro');
       void speakerModule.offsetWidth;
       
@@ -912,7 +1024,6 @@
       speakerContainer.classList.remove('hidden');
       speakerModule.classList.add('active');
 
-      // Auto-hide after 5 seconds
       if (speakerTimeout) clearTimeout(speakerTimeout);
       speakerTimeout = setTimeout(() => {
         hideSpeaker();
@@ -941,6 +1052,49 @@
       });
     }
 
+    // ========== GIVING FUNCTIONS ==========
+    function showGiving() {
+      givingContainer.classList.add('visible');
+      givingContainer.classList.remove('hidden');
+    }
+
+    function hideGiving() {
+      return new Promise((resolve) => {
+        if (!givingContainer.classList.contains('visible')) {
+          resolve();
+          return;
+        }
+        givingContainer.classList.remove('visible');
+        givingContainer.classList.add('hidden');
+        setTimeout(resolve, 600);
+      });
+    }
+
+    // ========== LYRICS FUNCTIONS ==========
+    function showLyrics(chunks, currentIndex) {
+      currentLyricsData = { chunks, currentIndex };
+      updateLyricDisplay(chunks[currentIndex]);
+      
+      lyricsContainer.classList.add('visible');
+      lyricsContainer.classList.remove('hidden');
+    }
+
+    function updateLyricDisplay(text) {
+      lyricsContent.textContent = text || '';
+    }
+
+    function hideLyrics() {
+      return new Promise((resolve) => {
+        if (!lyricsContainer.classList.contains('visible')) {
+          resolve();
+          return;
+        }
+        lyricsContainer.classList.remove('visible');
+        lyricsContainer.classList.add('hidden');
+        setTimeout(resolve, 600);
+      });
+    }
+
     // ========== SOCKET.IO EVENT HANDLERS ==========
     socket.on('connect', () => {
       console.log('✅ Connected to broadcast server');
@@ -955,21 +1109,17 @@
       lowerThirdToggleState = state.lowerThirdToggleState;
     });
 
+    // Lower Third Events
     socket.on('updateLowerThird', async (data) => {
       console.log('📺 Update Lower Third:', data);
       
-      // Hide scripture and speaker if visible
-      if (scriptureContainer.classList.contains('visible')) {
-        await hideScripture();
-      }
-      
-      if (speakerContainer.classList.contains('visible')) {
-        await hideSpeaker();
-      }
+      if (scriptureContainer.classList.contains('visible')) await hideScripture();
+      if (speakerContainer.classList.contains('visible')) await hideSpeaker();
+      if (givingContainer.classList.contains('visible')) await hideGiving();
+      if (lyricsContainer.classList.contains('visible')) await hideLyrics();
 
       lowerThirdToggleState = true;
 
-      // If lower third is already visible, hide first then show with new data
       if (lowerThirdContainer.classList.contains('visible')) {
         await hideLowerThird();
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -979,21 +1129,20 @@
     });
 
     socket.on('hideLowerThird', async () => {
-      console.log('📺 Hide Lower Third');
       lowerThirdToggleState = false;
       await hideLowerThird();
     });
 
     socket.on('showLowerThird', async () => {
-      console.log('📺 Show Lower Third');
       lowerThirdToggleState = true;
       
-      // Don't show if scripture or speaker is visible
-      if (scriptureContainer.classList.contains('visible') || speakerContainer.classList.contains('visible')) {
+      if (scriptureContainer.classList.contains('visible') || 
+          speakerContainer.classList.contains('visible') || 
+          givingContainer.classList.contains('visible') || 
+          lyricsContainer.classList.contains('visible')) {
         return;
       }
       
-      // Show with current data if hidden
       if (!lowerThirdContainer.classList.contains('visible')) {
         showLowerThird(
           ltHeading.textContent || defaultLowerThird.heading,
@@ -1003,54 +1152,56 @@
       }
     });
 
+    // Scripture Events
     socket.on('showScripture', async (data) => {
       console.log('📖 Show Scripture:', data);
       
-      // Hide lower third if visible
-      if (lowerThirdContainer.classList.contains('visible')) {
-        await hideLowerThird();
-      }
-      
-      // Hide speaker if visible
-      if (speakerContainer.classList.contains('visible')) {
-        await hideSpeaker();
-      }
+      if (lowerThirdContainer.classList.contains('visible')) await hideLowerThird();
+      if (speakerContainer.classList.contains('visible')) await hideSpeaker();
+      if (givingContainer.classList.contains('visible')) await hideGiving();
+      if (lyricsContainer.classList.contains('visible')) await hideLyrics();
 
-      // If scripture is already visible, just update the text
       if (scriptureContainer.classList.contains('visible')) {
-        scriptureRef.textContent = data.ref;
-        typeScriptureText(scriptureText, data.text, () => {});
+        updateScriptureLive(data.ref, data.text, data.version);
         return;
       }
 
-      showScripture(data.ref, data.text);
+      showScripture(data.ref, data.text, data.version);
+    });
+
+    socket.on('refreshScripture', (data) => {
+      console.log('🔄 Refresh Scripture:', data);
+      if (scriptureContainer.classList.contains('visible')) {
+        updateScriptureLive(data.ref, data.text, data.version);
+      }
     });
 
     socket.on('hideScripture', async () => {
-      console.log('📖 Hide Scripture');
       await hideScripture();
       
-      // Show lower third if toggle is on
-      if (lowerThirdToggleState && !speakerContainer.classList.contains('visible')) {
-        if (!lowerThirdContainer.classList.contains('visible')) {
-          showLowerThird(
-            ltHeading.textContent || defaultLowerThird.heading,
-            defaultLowerThird.headline,
-            defaultLowerThird.scrollMessages
-          );
-        }
+      if (lowerThirdToggleState && !speakerContainer.classList.contains('visible') && 
+          !givingContainer.classList.contains('visible') && !lyricsContainer.classList.contains('visible')) {
+        setTimeout(() => {
+          if (!lowerThirdContainer.classList.contains('visible')) {
+            showLowerThird(
+              ltHeading.textContent || defaultLowerThird.heading,
+              defaultLowerThird.headline,
+              defaultLowerThird.scrollMessages
+            );
+          }
+        }, 200);
       }
     });
 
+    // Speaker Events
     socket.on('showSpeaker', async (data) => {
       console.log('🎤 Show Speaker:', data);
       
-      // Hide lower third if visible
-      if (lowerThirdContainer.classList.contains('visible')) {
-        await hideLowerThird();
-      }
+      if (lowerThirdContainer.classList.contains('visible')) await hideLowerThird();
+      if (scriptureContainer.classList.contains('visible')) await hideScripture();
+      if (givingContainer.classList.contains('visible')) await hideGiving();
+      if (lyricsContainer.classList.contains('visible')) await hideLyrics();
 
-      // If speaker is already visible, hide first then show new
       if (speakerContainer.classList.contains('visible')) {
         await hideSpeaker();
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -1060,29 +1211,90 @@
     });
 
     socket.on('hideSpeaker', async () => {
-      console.log('🎤 Hide Speaker');
       await hideSpeaker();
     });
 
     socket.on('speakerAutoHidden', () => {
-      console.log('🎤 Speaker auto-hidden');
-      // Show lower third if toggle is on and scripture is not visible
-      if (lowerThirdToggleState && !scriptureContainer.classList.contains('visible')) {
-        if (!lowerThirdContainer.classList.contains('visible')) {
-          showLowerThird(
-            ltHeading.textContent || defaultLowerThird.heading,
-            defaultLowerThird.headline,
-            defaultLowerThird.scrollMessages
-          );
-        }
+      if (lowerThirdToggleState && !scriptureContainer.classList.contains('visible') && 
+          !givingContainer.classList.contains('visible') && !lyricsContainer.classList.contains('visible')) {
+        setTimeout(() => {
+          if (!lowerThirdContainer.classList.contains('visible')) {
+            showLowerThird(
+              ltHeading.textContent || defaultLowerThird.heading,
+              defaultLowerThird.headline,
+              defaultLowerThird.scrollMessages
+            );
+          }
+        }, 200);
       }
+    });
+
+    // Giving Events
+    socket.on('showGiving', async () => {
+      console.log('💰 Show Giving');
+      
+      if (lowerThirdContainer.classList.contains('visible')) await hideLowerThird();
+      if (scriptureContainer.classList.contains('visible')) await hideScripture();
+      if (speakerContainer.classList.contains('visible')) await hideSpeaker();
+      if (lyricsContainer.classList.contains('visible')) await hideLyrics();
+
+      showGiving();
+    });
+
+    socket.on('hideGiving', async () => {
+      await hideGiving();
+      
+      if (lowerThirdToggleState && !scriptureContainer.classList.contains('visible') && 
+          !speakerContainer.classList.contains('visible') && !lyricsContainer.classList.contains('visible')) {
+        setTimeout(() => {
+          if (!lowerThirdContainer.classList.contains('visible')) {
+            showLowerThird(
+              ltHeading.textContent || defaultLowerThird.heading,
+              defaultLowerThird.headline,
+              defaultLowerThird.scrollMessages
+            );
+          }
+        }, 200);
+      }
+    });
+
+    // Lyrics Events
+    socket.on('showLyrics', async (data) => {
+      console.log('🎵 Show Lyrics:', data);
+      
+      if (lowerThirdContainer.classList.contains('visible')) await hideLowerThird();
+      if (scriptureContainer.classList.contains('visible')) await hideScripture();
+      if (speakerContainer.classList.contains('visible')) await hideSpeaker();
+      if (givingContainer.classList.contains('visible')) await hideGiving();
+
+      showLyrics(data.chunks, data.currentIndex);
+    });
+
+    socket.on('hideLyrics', async () => {
+      await hideLyrics();
+      
+      if (lowerThirdToggleState && !scriptureContainer.classList.contains('visible') && 
+          !speakerContainer.classList.contains('visible') && !givingContainer.classList.contains('visible')) {
+        setTimeout(() => {
+          if (!lowerThirdContainer.classList.contains('visible')) {
+            showLowerThird(
+              ltHeading.textContent || defaultLowerThird.heading,
+              defaultLowerThird.headline,
+              defaultLowerThird.scrollMessages
+            );
+          }
+        }, 3000);
+      }
+    });
+
+    socket.on('updateLyricIndex', (data) => {
+      updateLyricDisplay(data.text);
     });
 
     // ========== INITIALIZATION ==========
     function initialize() {
       updateDate();
       
-      // Show default lower third immediately
       showLowerThird(
         defaultLowerThird.heading,
         defaultLowerThird.headline,
@@ -1093,7 +1305,6 @@
       console.log('⏳ Waiting for control signals...');
     }
 
-    // Start the broadcast display
     initialize();
   })();
 </script>
