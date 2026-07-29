@@ -45,20 +45,6 @@ app.get('/api/bible', (req, res) => {
     }
 });
 
-// API endpoint to get specific book
-app.get('/api/bible/:bookId', (req, res) => {
-    if (!bibleData) {
-        return res.status(500).json({ error: 'Bible data not available' });
-    }
-    
-    const book = bibleData.books.find(b => b.bookId === parseInt(req.params.bookId));
-    if (book) {
-        res.json(book);
-    } else {
-        res.status(404).json({ error: 'Book not found' });
-    }
-});
-
 // Optional: Handle root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -72,7 +58,7 @@ app.get('/controller', (req, res) => {
 // ========== SOCKET.IO LOGIC ==========
 let currentState = {
     lowerThird: {
-        visible: true, // Start visible by default
+        visible: true,
         heading: 'Repentance & Holiness',
         headline: 'CITY MEGA CHURCH SUNDAY SERVICE',
         scrollMessages: [
@@ -84,12 +70,26 @@ let currentState = {
         ]
     },
     scripture: {
-        visible: false
+        visible: false,
+        ref: '',
+        text: '',
+        version: 'KJV'
     },
     speaker: {
+        visible: false,
+        role: 'NOW MINISTERING',
+        name: 'Bishop Jason'
+    },
+    giving: {
         visible: false
     },
-    lowerThirdToggleState: true // Track if user wants lower third visible
+    lyrics: {
+        visible: false,
+        currentIndex: 0,
+        totalChunks: 0,
+        chunks: []
+    },
+    lowerThirdToggleState: true
 };
 
 io.on('connection', (socket) => {
@@ -130,7 +130,10 @@ io.on('connection', (socket) => {
     socket.on('showScripture', (data) => {
         console.log('📖 Show Scripture:', data);
         currentState.scripture.visible = true;
-        currentState.lowerThird.visible = false; // Hide lower third when scripture shows
+        currentState.scripture.ref = data.ref;
+        currentState.scripture.text = data.text;
+        currentState.scripture.version = data.version || 'KJV';
+        currentState.lowerThird.visible = false;
         io.emit('showScripture', data);
     });
 
@@ -139,10 +142,21 @@ io.on('connection', (socket) => {
         currentState.scripture.visible = false;
         io.emit('hideScripture');
         
-        // If lower third toggle is on, show it back
-        if (currentState.lowerThirdToggleState) {
-            currentState.lowerThird.visible = true;
-            io.emit('showLowerThird');
+        if (currentState.lowerThirdToggleState && !currentState.speaker.visible && !currentState.giving.visible && !currentState.lyrics.visible) {
+            setTimeout(() => {
+                currentState.lowerThird.visible = true;
+                io.emit('showLowerThird');
+            }, 200);
+        }
+    });
+
+    socket.on('refreshScripture', (data) => {
+        console.log('📖 Refresh Scripture:', data);
+        if (currentState.scripture.visible) {
+            currentState.scripture.ref = data.ref;
+            currentState.scripture.text = data.text;
+            currentState.scripture.version = data.version || 'KJV';
+            io.emit('refreshScripture', data);
         }
     });
 
@@ -150,7 +164,9 @@ io.on('connection', (socket) => {
     socket.on('showSpeaker', (data) => {
         console.log('🎤 Show Speaker:', data);
         currentState.speaker.visible = true;
-        currentState.lowerThird.visible = false; // Hide lower third when speaker shows
+        currentState.speaker.role = data.role;
+        currentState.speaker.name = data.name;
+        currentState.lowerThird.visible = false;
         io.emit('showSpeaker', data);
     });
 
@@ -165,10 +181,76 @@ io.on('connection', (socket) => {
         currentState.speaker.visible = false;
         socket.broadcast.emit('speakerAutoHidden');
         
-        // If lower third toggle is on, show it back
-        if (currentState.lowerThirdToggleState && !currentState.scripture.visible) {
-            currentState.lowerThird.visible = true;
-            io.emit('showLowerThird');
+        if (currentState.lowerThirdToggleState && !currentState.scripture.visible && !currentState.giving.visible && !currentState.lyrics.visible) {
+            setTimeout(() => {
+                currentState.lowerThird.visible = true;
+                io.emit('showLowerThird');
+            }, 200);
+        }
+    });
+
+    // ========== GIVING CONTROLS ==========
+    socket.on('showGiving', () => {
+        console.log('💰 Show Giving');
+        currentState.giving.visible = true;
+        currentState.lowerThird.visible = false;
+        io.emit('showGiving');
+    });
+
+    socket.on('hideGiving', () => {
+        console.log('💰 Hide Giving');
+        currentState.giving.visible = false;
+        io.emit('hideGiving');
+        
+        if (currentState.lowerThirdToggleState && !currentState.scripture.visible && !currentState.speaker.visible && !currentState.lyrics.visible) {
+            setTimeout(() => {
+                currentState.lowerThird.visible = true;
+                io.emit('showLowerThird');
+            }, 200);
+        }
+    });
+
+    // ========== LYRICS CONTROLS ==========
+    socket.on('showLyrics', (data) => {
+        console.log('🎵 Show Lyrics:', data);
+        currentState.lyrics.visible = true;
+        currentState.lyrics.chunks = data.chunks || [];
+        currentState.lyrics.currentIndex = data.currentIndex || 0;
+        currentState.lyrics.totalChunks = data.chunks ? data.chunks.length : 0;
+        currentState.lowerThird.visible = false;
+        io.emit('showLyrics', data);
+    });
+
+    socket.on('hideLyrics', () => {
+        console.log('🎵 Hide Lyrics');
+        currentState.lyrics.visible = false;
+        io.emit('hideLyrics');
+        
+        if (currentState.lowerThirdToggleState && !currentState.scripture.visible && !currentState.speaker.visible && !currentState.giving.visible) {
+            setTimeout(() => {
+                currentState.lowerThird.visible = true;
+                io.emit('showLowerThird');
+            }, 3000); // 3 second delay for lyrics
+        }
+    });
+
+    socket.on('nextLyric', () => {
+        if (currentState.lyrics.currentIndex < currentState.lyrics.totalChunks - 1) {
+            currentState.lyrics.currentIndex++;
+            io.emit('updateLyricIndex', {
+                currentIndex: currentState.lyrics.currentIndex,
+                text: currentState.lyrics.chunks[currentState.lyrics.currentIndex]
+            });
+        }
+    });
+
+    socket.on('previousLyric', () => {
+        if (currentState.lyrics.currentIndex > 0) {
+            currentState.lyrics.currentIndex--;
+            io.emit('updateLyricIndex', {
+                currentIndex: currentState.lyrics.currentIndex,
+                text: currentState.lyrics.chunks[currentState.lyrics.currentIndex]
+            });
         }
     });
 
