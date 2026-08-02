@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Broadcast Control Panel • Studio</title>
+    <title>CMC Broadcast Control • Studio</title>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <style>
         :root {
             --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-panel: #1a1a2e;
+            --bg-secondary: #111118;
+            --bg-panel: #181825;
             --border: rgba(255,255,255,0.06);
-            --text-primary: #e8e8ed;
+            --text-primary: #e4e4ed;
             --text-secondary: #8888a0;
-            --accent-gold: #fbad18;
-            --accent-purple: #8b5cf6;
-            --accent-blue: #3b82f6;
-            --accent-green: #34d399;
-            --accent-red: #ef4444;
-            --accent-pink: #ec4899;
-            --accent-orange: #f97316;
+            --gold: #fbad18;
+            --purple: #8b5cf6;
+            --blue: #3b82f6;
+            --green: #34d399;
+            --red: #ef4444;
+            --pink: #ec4899;
+            --orange: #f97316;
+            --live-red: #ff2d55;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,835 +28,645 @@
         body {
             font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
             background: var(--bg-primary);
-            min-height: 100vh;
+            height: 100vh;
             color: var(--text-primary);
-            overflow-x: hidden;
+            overflow: hidden;
+            display: flex;
         }
 
-        /* Loading Overlay */
+        /* LOADING */
         .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 9999;
         }
         .loading-spinner {
-            width: 48px; height: 48px;
+            width: 40px; height: 40px;
             border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: var(--accent-gold);
+            border-top-color: var(--gold);
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.7s linear infinite;
         }
-        .loading-text { margin-top: 16px; font-size: 15px; color: #aaa; }
+        .loading-text { margin-top: 14px; font-size: 14px; color: #999; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Main Layout */
-        .studio-container {
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Preview Panel (Left) */
+        /* LEFT PANEL - PREVIEW */
         .preview-panel {
-            width: 420px;
-            min-width: 420px;
+            width: 420px; min-width: 420px;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
+            display: flex; flex-direction: column;
+            padding: 20px; gap: 16px;
             overflow-y: auto;
         }
-        .preview-panel h2 {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .preview-header {
+            display: flex; align-items: center; justify-content: space-between;
         }
-        .preview-panel h2 .dot {
+        .preview-header h2 {
+            font-size: 13px; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-secondary);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .live-dot {
             width: 8px; height: 8px; border-radius: 50%;
-            background: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green);
+            background: var(--live-red);
+            box-shadow: 0 0 10px var(--live-red);
+            animation: pulse-dot 1.5s ease-in-out infinite;
         }
-        .preview-screen {
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .preview-frame {
             background: #000;
-            border-radius: 12px;
+            border-radius: 10px;
             aspect-ratio: 16/9;
-            margin-bottom: 16px;
-            position: relative;
-            overflow: hidden;
             border: 1px solid var(--border);
+            overflow: hidden;
+            position: relative;
         }
-        .preview-screen .mini-lt {
-            position: absolute; bottom: 20px; left: 30px; right: 30px;
-            background: linear-gradient(90deg, rgba(251,173,24,0.9), rgba(249,115,22,0.9));
-            height: 20px; border-radius: 4px;
-            display: flex; align-items: center; padding-left: 10px;
-            font-size: 9px; font-weight: 700; color: #000;
-            transform: skewX(-20deg);
+        .preview-frame iframe {
+            width: 100%; height: 100%; border: none;
+            pointer-events: none;
         }
-        .preview-screen .mini-scripture {
-            position: absolute; bottom: 20px; left: 20px; right: 20px;
+        .preview-overlay {
+            position: absolute; bottom: 12px; left: 16px; right: 16px;
             background: rgba(0,0,0,0.85); border-radius: 6px;
-            padding: 12px; font-size: 10px; color: #ffd700;
+            padding: 8px 12px; font-size: 10px;
+            color: var(--gold); text-align: center;
+            font-weight: 500;
             display: none;
         }
-        .status-bar {
-            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+
+        /* STATUS SHORTCUTS */
+        .shortcuts-title {
+            font-size: 11px; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-secondary);
         }
-        .status-item {
-            padding: 6px 12px; border-radius: 20px; font-size: 11px;
-            font-weight: 500; border: 1px solid var(--border);
-            display: flex; align-items: center; gap: 6px;
+        .shortcuts-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px;
         }
-        .status-item.active {
-            border-color: var(--accent-green);
-            background: rgba(52,211,153,0.1);
-            color: var(--accent-green);
+        .shortcut-btn {
+            padding: 12px 10px; border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            color: #999; cursor: pointer;
+            font-size: 12px; font-weight: 600;
+            text-align: center; transition: all 0.2s ease;
+            font-family: inherit;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
         }
-        .status-dot {
+        .shortcut-btn:hover {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.03);
+            color: #fff;
+        }
+        .shortcut-btn.live {
+            border-color: var(--live-red) !important;
+            background: rgba(255,45,85,0.1) !important;
+            color: #fff !important;
+            box-shadow: 0 0 20px rgba(255,45,85,0.15);
+        }
+        .shortcut-btn.live .shortcut-dot {
+            background: var(--live-red);
+            box-shadow: 0 0 8px var(--live-red);
+        }
+        .shortcut-dot {
             width: 6px; height: 6px; border-radius: 50%;
             background: #555;
+            transition: all 0.2s ease;
         }
-        .status-item.active .status-dot {
-            background: var(--accent-green);
-            box-shadow: 0 0 6px var(--accent-green);
+        .shortcut-label {
+            font-size: 10px; color: #777; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .shortcut-btn.live .shortcut-label {
+            color: var(--live-red);
         }
 
-        /* Controls Panel (Right) */
+        /* RIGHT PANEL - CONTROLS */
         .controls-panel {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
+            flex: 1; overflow-y: auto; padding: 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 16px;
-            align-content: start;
+            grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+            gap: 14px; align-content: start;
         }
 
-        /* Panel Cards */
+        /* PANEL CARD */
         .panel {
             background: var(--bg-panel);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 20px;
-            transition: all 0.2s ease;
+            border-radius: 12px; padding: 18px;
+            transition: border-color 0.2s;
         }
-        .panel:hover {
-            border-color: rgba(255,255,255,0.15);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
+        .panel:hover { border-color: rgba(255,255,255,0.12); }
         .panel-header {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
-            padding-bottom: 14px;
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 16px; padding-bottom: 12px;
             border-bottom: 1px solid var(--border);
         }
         .panel-icon {
-            width: 34px; height: 34px; border-radius: 8px;
+            width: 32px; height: 32px; border-radius: 7px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: 700;
+            font-size: 13px; font-weight: 700;
         }
-        .panel-icon.lt { background: linear-gradient(135deg, #fbad18, #f97316); color: #000; }
-        .panel-icon.sc { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; }
-        .panel-icon.sp { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; }
-        .panel-icon.gv { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
-        .panel-icon.ly { background: linear-gradient(135deg, #ec4899, #be185d); color: #fff; }
-        .panel-title {
-            font-size: 15px; font-weight: 600; color: #fff;
-        }
-        .panel-subtitle {
-            font-size: 11px; color: var(--text-secondary); margin-top: 2px;
-        }
+        .pi-lt { background: linear-gradient(135deg, #fbad18, #f97316); color: #000; }
+        .pi-sc { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; }
+        .pi-sp { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; }
+        .pi-gv { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
+        .pi-ly { background: linear-gradient(135deg, #ec4899, #be185d); color: #fff; }
+        .panel-title { font-size: 14px; font-weight: 600; }
+        .panel-subtitle { font-size: 11px; color: var(--text-secondary); }
 
-        /* Form Elements */
-        .form-group { margin-bottom: 14px; }
+        /* FORM */
+        .form-group { margin-bottom: 12px; }
         .form-group label {
-            display: block; font-size: 11px; font-weight: 600;
-            margin-bottom: 5px; color: var(--text-secondary);
-            text-transform: uppercase; letter-spacing: 0.8px;
+            display: block; font-size: 10px; font-weight: 600;
+            margin-bottom: 4px; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.7px;
         }
         .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 10px 12px;
-            background: rgba(0,0,0,0.4);
+            width: 100%; padding: 9px 11px;
+            background: rgba(0,0,0,0.35);
             border: 1px solid var(--border);
-            border-radius: 8px; color: #fff;
+            border-radius: 7px; color: #fff;
             font-size: 13px; font-family: inherit;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none; border-color: var(--accent-gold);
-            box-shadow: 0 0 0 3px rgba(251,173,24,0.08);
+            outline: none; border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(251,173,24,0.06);
         }
         .form-group textarea {
-            resize: vertical; min-height: 80px;
+            resize: vertical; min-height: 70px;
             font-family: 'SF Mono', 'Consolas', monospace;
-            font-size: 12px; line-height: 1.5;
+            font-size: 11px; line-height: 1.6;
         }
-        .form-row {
-            display: grid; gap: 10px;
-        }
-        .form-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-        .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-        .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+        .form-row { display: grid; gap: 10px; }
+        .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .cols-2 { grid-template-columns: 1fr 1fr; }
 
-        /* Buttons */
+        /* BUTTONS */
         .btn {
-            padding: 9px 16px; border: none; border-radius: 8px;
-            font-size: 13px; font-weight: 600; cursor: pointer;
-            transition: all 0.2s ease; display: inline-flex;
-            align-items: center; gap: 6px;
-            font-family: inherit;
+            padding: 8px 14px; border: none; border-radius: 7px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; display: inline-flex;
+            align-items: center; gap: 5px; font-family: inherit;
         }
         .btn:active { transform: scale(0.96); }
-        .btn-sm { padding: 6px 10px; font-size: 11px; border-radius: 6px; }
-        .btn-xs { padding: 4px 8px; font-size: 10px; border-radius: 5px; }
-        .btn-primary { background: linear-gradient(135deg, #fbad18, #f97316); color: #000; }
-        .btn-primary:hover { box-shadow: 0 4px 14px rgba(251,173,24,0.35); }
-        .btn-success { background: linear-gradient(135deg, #34d399, #10b981); color: #000; }
-        .btn-success:hover { box-shadow: 0 4px 14px rgba(52,211,153,0.35); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
-        .btn-danger:hover { box-shadow: 0 4px 14px rgba(239,68,68,0.35); }
+        .btn-sm { padding: 5px 9px; font-size: 11px; border-radius: 5px; }
+        .btn-xs { padding: 3px 7px; font-size: 10px; border-radius: 4px; }
+        .btn-gold { background: linear-gradient(135deg, #fbad18, #f97316); color: #000; }
+        .btn-gold:hover { box-shadow: 0 4px 15px rgba(251,173,24,0.3); }
+        .btn-green { background: linear-gradient(135deg, #34d399, #10b981); color: #000; }
+        .btn-green:hover { box-shadow: 0 4px 15px rgba(52,211,153,0.3); }
+        .btn-red { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .btn-red:hover { box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
         .btn-outline {
-            background: transparent; border: 1px solid var(--border);
-            color: #ccc;
+            background: transparent; border: 1px solid var(--border); color: #bbb;
         }
         .btn-outline:hover { border-color: #fff; color: #fff; }
         .btn-purple { background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
-        .btn-purple:hover { background: rgba(139,92,246,0.35); }
-        .btn-ghost { background: transparent; color: #999; }
-        .btn-ghost:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .btn-purple:hover { background: rgba(139,92,246,0.3); }
+        .btn-ghost { background: transparent; color: #888; }
+        .btn-ghost:hover { color: #fff; background: rgba(255,255,255,0.04); }
+        .btn-group { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 12px; }
 
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-
-        /* Message Items */
+        /* MESSAGE ITEMS */
         .message-item {
-            display: flex; gap: 6px; margin-bottom: 6px; align-items: center;
+            display: flex; gap: 5px; margin-bottom: 5px; align-items: center;
         }
         .message-item input { flex: 1; }
 
-        /* Lyrics Layout */
-        .lyrics-layout {
-            display: flex; gap: 16px;
+        /* LYRICS LAYOUT */
+        .lyrics-layout { display: flex; gap: 14px; }
+        .lyrics-input-area { flex: 1; min-width: 0; }
+        .lyrics-slides {
+            width: 190px; min-width: 190px;
+            max-height: 300px; overflow-y: auto;
+            background: rgba(0,0,0,0.3); border-radius: 8px;
+            padding: 6px; border: 1px solid var(--border);
         }
-        .lyrics-input-area {
-            flex: 1; min-width: 0;
-        }
-        .lyrics-slides-area {
-            width: 200px; min-width: 200px;
-            max-height: 350px; overflow-y: auto;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
-            padding: 8px;
-            border: 1px solid var(--border);
-        }
-        .lyrics-slides-area::-webkit-scrollbar { width: 4px; }
-        .lyrics-slides-area::-webkit-scrollbar-track { background: transparent; }
-        .lyrics-slides-area::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+        .lyrics-slides::-webkit-scrollbar { width: 3px; }
+        .lyrics-slides::-webkit-scrollbar-track { background: transparent; }
+        .lyrics-slides::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
         .slide-item {
-            padding: 8px 10px; border-radius: 6px;
-            cursor: pointer; font-size: 11px;
-            color: #999; transition: all 0.15s ease;
-            margin-bottom: 4px; border: 1px solid transparent;
-            white-space: nowrap; overflow: hidden;
-            text-overflow: ellipsis;
+            padding: 7px 9px; border-radius: 5px; cursor: pointer;
+            font-size: 10px; color: #888; transition: all 0.15s;
+            margin-bottom: 3px; border: 1px solid transparent;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .slide-item:hover { background: rgba(255,255,255,0.05); color: #ccc; }
+        .slide-item:hover { background: rgba(255,255,255,0.04); color: #ccc; }
         .slide-item.active {
-            background: rgba(139,92,246,0.25); color: #fff;
-            border-color: rgba(139,92,246,0.5);
-            font-weight: 500;
-        }
-        .slide-item.blank {
-            background: rgba(239,68,68,0.15); color: #f87171;
-            border-color: rgba(239,68,68,0.3);
+            background: rgba(139,92,246,0.2); color: #fff;
+            border-color: rgba(139,92,246,0.5); font-weight: 500;
         }
 
-        /* Preview Box */
+        /* PREVIEW MINI */
         .preview-mini {
-            background: rgba(0,0,0,0.5); border-radius: 10px;
-            padding: 14px; margin-top: 10px;
-            min-height: 50px; border: 1px solid var(--border);
+            background: rgba(0,0,0,0.45); border-radius: 8px;
+            padding: 12px; margin-top: 8px; border: 1px solid var(--border);
+            min-height: 40px;
         }
-        .preview-mini .ref { color: #ffd700; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-        .preview-mini .text { color: #ddd; font-size: 13px; line-height: 1.5; font-style: italic; }
-        .preview-mini .lyric-text { color: #ddd; font-size: 13px; line-height: 1.5; text-align: center; }
-        .preview-mini .speaker-role { color: #fbad18; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-        .preview-mini .speaker-name { color: #fff; font-size: 18px; font-weight: 700; margin-top: 2px; }
+        .preview-mini .ref { color: #ffd700; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .preview-mini .text { color: #ddd; font-size: 12px; line-height: 1.5; font-style: italic; }
+        .preview-mini .lyric-text { color: #ddd; font-size: 12px; line-height: 1.5; text-align: center; }
+        .preview-mini .sp-role { color: #fbad18; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .preview-mini .sp-name { color: #fff; font-size: 16px; font-weight: 700; margin-top: 2px; }
 
-        /* Indicators */
-        .nav-indicator {
-            text-align: center; color: #aaa; font-size: 12px;
-            min-width: 80px; font-weight: 500;
-        }
-        .nav-row {
-            display: flex; align-items: center; gap: 8px;
-            justify-content: center; margin: 10px 0;
-        }
+        .nav-indicator { text-align: center; color: #aaa; font-size: 11px; min-width: 60px; font-weight: 500; }
+        .nav-row { display: flex; align-items: center; gap: 6px; justify-content: center; margin: 8px 0; }
 
-        /* Responsive */
         @media (max-width: 1100px) {
-            .studio-container { flex-direction: column; }
-            .preview-panel { width: 100%; min-width: 100%; max-height: 250px; flex-shrink: 0; }
+            body { flex-direction: column; overflow-y: auto; }
+            .preview-panel { width: 100%; min-width: 100%; max-height: 300px; }
             .controls-panel { grid-template-columns: 1fr; }
             .lyrics-layout { flex-direction: column; }
-            .lyrics-slides-area { width: 100%; max-height: 180px; }
+            .lyrics-slides { width: 100%; max-height: 150px; }
         }
         @media (max-width: 600px) {
-            .form-row.cols-4 { grid-template-columns: 1fr 1fr; }
-            .form-row.cols-3 { grid-template-columns: 1fr 1fr; }
+            .cols-4 { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
 
-<!-- Loading -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
     <div class="loading-text">Initializing Studio...</div>
 </div>
 
-<div class="studio-container">
-    <!-- Preview Panel -->
-    <div class="preview-panel" id="previewPanel">
-        <h2><span class="dot"></span> Live Preview</h2>
-        <div class="preview-screen" id="previewScreen">
-            <div class="mini-lt" id="previewMiniLt">CITY MEGA CHURCH</div>
-            <div class="mini-scripture" id="previewMiniScripture"></div>
-        </div>
-        <div class="status-bar" id="statusBar">
-            <div class="status-item active" id="statusLt"><span class="status-dot"></span> Main LT</div>
-            <div class="status-item" id="statusSc"><span class="status-dot"></span> Scripture</div>
-            <div class="status-item" id="statusSp"><span class="status-dot"></span> Speaker</div>
-            <div class="status-item" id="statusGv"><span class="status-dot"></span> Giving</div>
-            <div class="status-item" id="statusLy"><span class="status-dot"></span> Lyrics</div>
-        </div>
+<!-- LEFT: Preview + Shortcuts -->
+<div class="preview-panel">
+    <div class="preview-header">
+        <h2><span class="live-dot"></span> Live Preview</h2>
+        <span style="font-size:10px;color:#666;">cmc-live.onrender.com</span>
     </div>
-
-    <!-- Controls Panel -->
-    <div class="controls-panel" id="controlsPanel">
-        
-        <!-- Main Lower Third -->
-        <div class="panel" id="panelLt">
-            <div class="panel-header">
-                <div class="panel-icon lt">LT</div>
-                <div>
-                    <div class="panel-title">Main Lower Third</div>
-                    <div class="panel-subtitle">Primary broadcast overlay</div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Heading (Small Bar)</label>
-                <input type="text" id="ltHeading" value="Repentance & Holiness">
-            </div>
-            <div class="form-group">
-                <label>Headline (White Bar)</label>
-                <input type="text" id="ltHeadline" value="CITY MEGA CHURCH SUNDAY SERVICE">
-            </div>
-            <label style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;">Scrolling Messages</label>
-            <div id="scrollMessagesList" style="margin-top:6px;">
-                <div class="message-item"><input type="text" value="For more information contact Bishop Dr.JJ: 0700727435"><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button></div>
-                <div class="message-item"><input type="text" value="repentandpreparetheway.org"><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button></div>
-                <div class="message-item"><input type="text" value="City Mega Church Livestream"><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button></div>
-            </div>
-            <button class="btn btn-outline btn-sm" onclick="addMessage()" style="margin-top:6px;">+ Add Message</button>
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="updateLowerThird()">Update &amp; Show</button>
-                <button class="btn btn-danger" id="ltToggleBtn" onclick="toggleLowerThird()">Hide</button>
-            </div>
-        </div>
-
-        <!-- Scripture -->
-        <div class="panel" id="panelSc">
-            <div class="panel-header">
-                <div class="panel-icon sc">Sc</div>
-                <div>
-                    <div class="panel-title">Scripture Display</div>
-                    <div class="panel-subtitle">Bible verse overlay</div>
-                </div>
-            </div>
-            <div class="form-row cols-4">
-                <div class="form-group"><label>Version</label><select id="scriptureVersion"><option value="KJV">KJV</option></select></div>
-                <div class="form-group"><label>Book</label><select id="scriptureBook" onchange="onBookChange()"><option>Loading...</option></select></div>
-                <div class="form-group"><label>Chapter</label><select id="scriptureChapter" onchange="onChapterChange()"><option>--</option></select></div>
-                <div class="form-group"><label>Verse</label><select id="scriptureVerse" onchange="onVerseChange()"><option>--</option></select></div>
-            </div>
-            <div class="nav-row">
-                <button class="btn btn-purple btn-sm" onclick="previousVerse()">◀ Prev</button>
-                <span class="nav-indicator" id="verseIndicator">-</span>
-                <button class="btn btn-purple btn-sm" onclick="nextVerse()">Next ▶</button>
-            </div>
-            <div class="preview-mini" id="scripturePreview">
-                <div class="ref">Select a verse</div>
-                <div class="text">Choose book, chapter, and verse</div>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-success" id="scriptureToggleBtn" onclick="toggleScripture()">Show Scripture</button>
-                <button class="btn btn-outline btn-sm" onclick="refreshScripture()" title="Refresh">↻ Refresh</button>
-            </div>
-        </div>
-
-        <!-- Speaker -->
-        <div class="panel" id="panelSp">
-            <div class="panel-header">
-                <div class="panel-icon sp">Sp</div>
-                <div>
-                    <div class="panel-title">Speaker Display</div>
-                    <div class="panel-subtitle">Auto-hides after 5 seconds</div>
-                </div>
-            </div>
-            <div class="form-row cols-2">
-                <div class="form-group"><label>Role / Title</label><input type="text" id="speakerRole" value="NOW MINISTERING"></div>
-                <div class="form-group"><label>Name</label><input type="text" id="speakerName" value="Bishop Jason"></div>
-            </div>
-            <div class="preview-mini" id="speakerPreview">
-                <div class="speaker-role">NOW MINISTERING</div>
-                <div class="speaker-name">Bishop Jason</div>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-success" id="speakerToggleBtn" onclick="toggleSpeaker()">Show Speaker</button>
-            </div>
-        </div>
-
-        <!-- Giving -->
-        <div class="panel" id="panelGv">
-            <div class="panel-header">
-                <div class="panel-icon gv">Gv</div>
-                <div>
-                    <div class="panel-title">Giving Details</div>
-                    <div class="panel-subtitle">Offerings &amp; donations</div>
-                </div>
-            </div>
-            <p style="color:#888;font-size:12px;margin-bottom:12px;">Simple overlay for giving information. Content added manually in broadcast view.</p>
-            <div class="btn-group">
-                <button class="btn btn-success" id="givingToggleBtn" onclick="toggleGiving()">Show Giving</button>
-            </div>
-        </div>
-
-        <!-- Lyrics -->
-        <div class="panel" id="panelLy">
-            <div class="panel-header">
-                <div class="panel-icon ly">Ly</div>
-                <div>
-                    <div class="panel-title">Lyrics Display</div>
-                    <div class="panel-subtitle">Song lyrics overlay</div>
-                </div>
-            </div>
-            <div class="lyrics-layout">
-                <div class="lyrics-input-area">
-                    <div class="form-group">
-                        <label>Paste Lyrics (blank line = new slide)</label>
-                        <textarea id="lyricsInput" placeholder="Verse 1 line 1&#10;Verse 1 line 2&#10;&#10;Chorus line 1&#10;Chorus line 2&#10;&#10;Verse 2 line 1&#10;Verse 2 line 2" oninput="onLyricsInput()"></textarea>
-                    </div>
-                    <div class="nav-row">
-                        <button class="btn btn-purple btn-sm" onclick="previousLyric()">◀ Prev</button>
-                        <span class="nav-indicator" id="lyricIndicator">0 / 0</span>
-                        <button class="btn btn-purple btn-sm" onclick="nextLyric()">Next ▶</button>
-                    </div>
-                    <div class="btn-group" style="margin-top:8px;">
-                        <button class="btn btn-outline btn-sm" onclick="blankLyrics()" title="Show blank slide">⏸ Blank</button>
-                        <button class="btn btn-outline btn-sm" onclick="refreshCurrentLyric()" title="Re-show current slide">↻ Re-show</button>
-                    </div>
-                </div>
-                <div class="lyrics-slides-area" id="chunkList">
-                    <div class="slide-item" style="color:#666;">Enter lyrics...</div>
-                </div>
-            </div>
-            <div class="preview-mini" id="lyricsPreview" style="margin-top:10px;">
-                <div class="lyric-text">Enter lyrics above to preview</div>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-success" id="lyricsToggleBtn" onclick="toggleLyrics()">Show Lyrics</button>
-            </div>
-        </div>
-
+    <div class="preview-frame">
+        <iframe src="https://cmc-live.onrender.com" id="previewIframe"></iframe>
+        <div class="preview-overlay" id="previewOverlay">Main Lower Third Active</div>
+    </div>
+    <div class="shortcuts-title">Quick Toggle • Click to switch</div>
+    <div class="shortcuts-grid">
+        <button class="shortcut-btn live" id="shortLt" onclick="shortcutToggle('lowerThird')">
+            <span class="shortcut-dot"></span> Main Lower Third
+            <span class="shortcut-label">LIVE</span>
+        </button>
+        <button class="shortcut-btn" id="shortSc" onclick="shortcutToggle('scripture')">
+            <span class="shortcut-dot"></span> Scripture
+            <span class="shortcut-label">OFF</span>
+        </button>
+        <button class="shortcut-btn" id="shortSp" onclick="shortcutToggle('speaker')">
+            <span class="shortcut-dot"></span> Speaker
+            <span class="shortcut-label">OFF</span>
+        </button>
+        <button class="shortcut-btn" id="shortGv" onclick="shortcutToggle('giving')">
+            <span class="shortcut-dot"></span> Giving
+            <span class="shortcut-label">OFF</span>
+        </button>
+        <button class="shortcut-btn" id="shortLy" onclick="shortcutToggle('lyrics')" style="grid-column: span 2;">
+            <span class="shortcut-dot"></span> Lyrics
+            <span class="shortcut-label">OFF</span>
+        </button>
     </div>
 </div>
 
-<script>
-    // ========== SOCKET.IO ==========
-    const socket = io();
+<!-- RIGHT: Controls -->
+<div class="controls-panel">
 
-    // ========== STATE ==========
+    <!-- MAIN LOWER THIRD -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-icon pi-lt">LT</div>
+            <div>
+                <div class="panel-title">Main Lower Third</div>
+                <div class="panel-subtitle">Primary broadcast overlay</div>
+            </div>
+        </div>
+        <div class="form-group"><label>Heading (Small Bar)</label><input type="text" id="ltHeading" value="Repentance & Holiness"></div>
+        <div class="form-group"><label>Headline (White Bar)</label><input type="text" id="ltHeadline" value="CITY MEGA CHURCH SUNDAY SERVICE"></div>
+        <label style="font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;">Scrolling Messages</label>
+        <div id="scrollMessagesList" style="margin-top:4px;">
+            <div class="message-item"><input type="text" value="For more information contact Bishop Dr.JJ: 0700727435"><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button></div>
+            <div class="message-item"><input type="text" value="repentandpreparetheway.org"><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button></div>
+            <div class="message-item"><input type="text" value="City Mega Church Livestream"><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button></div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="addMessage()" style="margin-top:4px;">+ Add Message</button>
+        <div class="btn-group">
+            <button class="btn btn-gold" onclick="updateLowerThird()">Update &amp; Show</button>
+            <button class="btn btn-red" id="ltToggleBtn" onclick="toggleLowerThird()">Hide</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTURE -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-icon pi-sc">Sc</div>
+            <div><div class="panel-title">Scripture Display</div><div class="panel-subtitle">Bible verse overlay</div></div>
+        </div>
+        <div class="form-row cols-4">
+            <div class="form-group"><label>Version</label><select id="scriptureVersion"><option value="KJV">KJV</option></select></div>
+            <div class="form-group"><label>Book</label><select id="scriptureBook" onchange="onBookChange()"><option>Loading...</option></select></div>
+            <div class="form-group"><label>Chapter</label><select id="scriptureChapter" onchange="onChapterChange()"><option>--</option></select></div>
+            <div class="form-group"><label>Verse</label><select id="scriptureVerse" onchange="onVerseChange()"><option>--</option></select></div>
+        </div>
+        <div class="nav-row">
+            <button class="btn btn-purple btn-sm" onclick="previousVerse()">◀ Prev</button>
+            <span class="nav-indicator" id="verseIndicator">-</span>
+            <button class="btn btn-purple btn-sm" onclick="nextVerse()">Next ▶</button>
+        </div>
+        <div class="preview-mini" id="scripturePreview">
+            <div class="ref">Select a verse</div>
+            <div class="text">Choose book, chapter, and verse</div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-green" id="scriptureToggleBtn" onclick="toggleScripture()">Show Scripture</button>
+            <button class="btn btn-outline btn-sm" onclick="refreshScripture()">↻ Refresh</button>
+        </div>
+    </div>
+
+    <!-- SPEAKER -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-icon pi-sp">Sp</div>
+            <div><div class="panel-title">Speaker Display</div><div class="panel-subtitle">Auto-hides after 5 seconds</div></div>
+        </div>
+        <div class="form-row cols-2">
+            <div class="form-group"><label>Role / Title</label><input type="text" id="speakerRole" value="NOW MINISTERING"></div>
+            <div class="form-group"><label>Name</label><input type="text" id="speakerName" value="Bishop Jason"></div>
+        </div>
+        <div class="preview-mini" id="speakerPreview">
+            <div class="sp-role">NOW MINISTERING</div>
+            <div class="sp-name">Bishop Jason</div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-green" id="speakerToggleBtn" onclick="toggleSpeaker()">Show Speaker</button>
+        </div>
+    </div>
+
+    <!-- GIVING -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-icon pi-gv">Gv</div>
+            <div><div class="panel-title">Giving Details</div><div class="panel-subtitle">Offerings &amp; donations</div></div>
+        </div>
+        <p style="color:#777;font-size:11px;margin-bottom:10px;">Simple overlay for giving information. Content added in broadcast view.</p>
+        <div class="btn-group">
+            <button class="btn btn-green" id="givingToggleBtn" onclick="toggleGiving()">Show Giving</button>
+        </div>
+    </div>
+
+    <!-- LYRICS -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-icon pi-ly">Ly</div>
+            <div><div class="panel-title">Lyrics Display</div><div class="panel-subtitle">Song lyrics overlay</div></div>
+        </div>
+        <div class="lyrics-layout">
+            <div class="lyrics-input-area">
+                <div class="form-group">
+                    <label>Paste Lyrics (blank line = new slide)</label>
+                    <textarea id="lyricsInput" placeholder="Verse 1 line 1&#10;Verse 1 line 2&#10;&#10;Chorus line 1&#10;Chorus line 2" oninput="onLyricsInput()"></textarea>
+                </div>
+                <div class="nav-row">
+                    <button class="btn btn-purple btn-sm" onclick="previousLyric()">◀ Prev</button>
+                    <span class="nav-indicator" id="lyricIndicator">0 / 0</span>
+                    <button class="btn btn-purple btn-sm" onclick="nextLyric()">Next ▶</button>
+                </div>
+                <div class="btn-group" style="margin-top:6px;">
+                    <button class="btn btn-outline btn-sm" onclick="blankLyrics()">⏸ Blank</button>
+                    <button class="btn btn-outline btn-sm" onclick="refreshCurrentLyric()">↻ Re-show</button>
+                </div>
+            </div>
+            <div class="lyrics-slides" id="chunkList">
+                <div class="slide-item" style="color:#555;">Enter lyrics...</div>
+            </div>
+        </div>
+        <div class="preview-mini" id="lyricsPreview"><div class="lyric-text">Enter lyrics above</div></div>
+        <div class="btn-group">
+            <button class="btn btn-green" id="lyricsToggleBtn" onclick="toggleLyrics()">Show Lyrics</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const socket = io();
+    
+    // State
     let bibleData = null;
     let currentBookIndex = 0, currentChapterIndex = 0, currentVerseIndex = 0;
     let lyricsChunks = [], currentLyricIndex = 0;
-    
-    // Track what's visible on broadcast
     let broadcastState = {
         lowerThird: true, scripture: false, speaker: false,
         giving: false, lyrics: false
     };
 
-    // ========== LOADING ==========
-    async function loadBibleData() {
+    // Load Bible
+    async function loadBible() {
         try {
             const res = await fetch('/api/bible');
-            if (!res.ok) throw new Error('Failed');
             bibleData = await res.json();
             populateBooks();
             document.getElementById('loadingOverlay').style.display = 'none';
         } catch(e) {
-            document.querySelector('.loading-text').textContent = 'Error loading. Refresh.';
+            document.querySelector('.loading-text').textContent = 'Error loading. Please refresh.';
         }
     }
-
     function populateBooks() {
         const sel = document.getElementById('scriptureBook');
         sel.innerHTML = '';
         if(!bibleData?.books) return;
         bibleData.books.forEach((b,i) => {
-            const o = document.createElement('option');
-            o.value = i; o.textContent = `${b.englishName} (${b.book})`;
-            sel.appendChild(o);
+            sel.appendChild(new Option(`${b.englishName} (${b.book})`, i));
         });
         const ji = bibleData.books.findIndex(b=>b.book==='John');
         if(ji>=0){ sel.value=ji; currentBookIndex=ji; onBookChange(); }
     }
 
-    // ========== SCRIPTURE ==========
+    // Scripture nav
     function onBookChange() {
+        currentBookIndex = +document.getElementById('scriptureBook').value;
         const cs = document.getElementById('scriptureChapter');
-        const vs = document.getElementById('scriptureVerse');
-        currentBookIndex = parseInt(document.getElementById('scriptureBook').value);
-        cs.innerHTML=''; vs.innerHTML='<option>--</option>';
-        if(isNaN(currentBookIndex)||!bibleData) return;
-        const book = bibleData.books[currentBookIndex];
-        book.chapters.forEach((c,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=`Ch ${c.chapter}`; cs.appendChild(o); });
-        const c3 = book.chapters.findIndex(c=>c.chapter===3);
-        cs.value = c3>=0 ? c3 : 0;
-        currentChapterIndex = c3>=0 ? c3 : 0;
+        cs.innerHTML=''; document.getElementById('scriptureVerse').innerHTML='<option>--</option>';
+        if(isNaN(currentBookIndex)) return;
+        bibleData.books[currentBookIndex].chapters.forEach((c,i) => cs.appendChild(new Option(`Ch ${c.chapter}`, i)));
+        const c3 = bibleData.books[currentBookIndex].chapters.findIndex(c=>c.chapter===3);
+        cs.value = c3>=0 ? c3 : 0; currentChapterIndex = c3>=0 ? c3 : 0;
         onChapterChange();
     }
     function onChapterChange() {
-        const vs = document.getElementById('scriptureVerse');
-        currentChapterIndex = parseInt(document.getElementById('scriptureChapter').value);
-        vs.innerHTML='';
-        if(isNaN(currentChapterIndex)||!bibleData) return;
-        const chapter = bibleData.books[currentBookIndex].chapters[currentChapterIndex];
-        chapter.verses.forEach((v,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=`V ${v.number}`; vs.appendChild(o); });
+        currentChapterIndex = +document.getElementById('scriptureChapter').value;
+        const vs = document.getElementById('scriptureVerse'); vs.innerHTML='';
+        if(isNaN(currentChapterIndex)) return;
+        bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses.forEach((v,i) => vs.appendChild(new Option(`V ${v.number}`, i)));
         vs.value=0; currentVerseIndex=0;
         onVerseChange();
     }
     function onVerseChange() {
-        currentVerseIndex = parseInt(document.getElementById('scriptureVerse').value);
+        currentVerseIndex = +document.getElementById('scriptureVerse').value;
         if(isNaN(currentVerseIndex)) return;
-        updateScripturePreview(); updateVerseIndicator();
+        updateScPreview(); updateVerseInd();
     }
-    function updateScripturePreview() {
+    function updateScPreview() {
         const p = document.getElementById('scripturePreview');
-        if(!bibleData||isNaN(currentBookIndex)||isNaN(currentChapterIndex)||isNaN(currentVerseIndex)){
-            p.querySelector('.ref').textContent='Select a verse';
-            p.querySelector('.text').textContent='Choose book, chapter, and verse';
-            return;
-        }
-        const b = bibleData.books[currentBookIndex];
-        const c = b.chapters[currentChapterIndex];
-        const v = c.verses[currentVerseIndex];
-        const ver = document.getElementById('scriptureVersion').value;
-        p.querySelector('.ref').textContent = `${b.englishName} ${c.chapter}:${v.number} (${ver})`;
+        if(!bibleData||isNaN(currentBookIndex)){ p.querySelector('.ref').textContent='Select'; p.querySelector('.text').textContent=''; return; }
+        const b = bibleData.books[currentBookIndex], c = b.chapters[currentChapterIndex], v = c.verses[currentVerseIndex];
+        p.querySelector('.ref').textContent = `${b.englishName} ${c.chapter}:${v.number} (${document.getElementById('scriptureVersion').value})`;
         p.querySelector('.text').textContent = v.text;
     }
-    function updateVerseIndicator() {
-        const ind = document.getElementById('verseIndicator');
-        if(!bibleData||isNaN(currentBookIndex)){ ind.textContent='-'; return; }
-        const b = bibleData.books[currentBookIndex];
-        const c = b.chapters[currentChapterIndex];
-        const v = c.verses[currentVerseIndex];
-        ind.textContent = `${b.book} ${c.chapter}:${v.number}`;
-    }
-    function previousVerse() {
+    function updateVerseInd() {
         if(!bibleData) return;
-        const b = bibleData.books[currentBookIndex];
-        const c = b.chapters[currentChapterIndex];
+        const b = bibleData.books[currentBookIndex], c = b.chapters[currentChapterIndex], v = c.verses[currentVerseIndex];
+        document.getElementById('verseIndicator').textContent = `${b.book} ${c.chapter}:${v.number}`;
+    }
+    function prevVerse() {
+        if(!bibleData) return;
         if(currentVerseIndex>0) currentVerseIndex--;
-        else if(currentChapterIndex>0){
-            currentChapterIndex--; 
-            currentVerseIndex = b.chapters[currentChapterIndex].verses.length-1;
-            document.getElementById('scriptureChapter').value=currentChapterIndex;
-        } else if(currentBookIndex>0){
-            currentBookIndex--;
-            const pb = bibleData.books[currentBookIndex];
-            currentChapterIndex = pb.chapters.length-1;
-            currentVerseIndex = pb.chapters[currentChapterIndex].verses.length-1;
-            document.getElementById('scriptureBook').value=currentBookIndex;
-            document.getElementById('scriptureChapter').value=currentChapterIndex;
-            populateChapterVerses();
-        } else return;
+        else if(currentChapterIndex>0){ currentChapterIndex--; currentVerseIndex=bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses.length-1; document.getElementById('scriptureChapter').value=currentChapterIndex; }
+        else if(currentBookIndex>0){ currentBookIndex--; currentChapterIndex=bibleData.books[currentBookIndex].chapters.length-1; currentVerseIndex=bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses.length-1; document.getElementById('scriptureBook').value=currentBookIndex; document.getElementById('scriptureChapter').value=currentChapterIndex; populateChapters(); }
+        else return;
         document.getElementById('scriptureVerse').value=currentVerseIndex;
-        updateScripturePreview(); updateVerseIndicator();
-        if(broadcastState.scripture) sendScripture();
+        updateScPreview(); updateVerseInd();
+        if(broadcastState.scripture) sendSc();
     }
     function nextVerse() {
         if(!bibleData) return;
-        const b = bibleData.books[currentBookIndex];
-        const c = b.chapters[currentChapterIndex];
-        if(currentVerseIndex < c.verses.length-1) currentVerseIndex++;
-        else if(currentChapterIndex < b.chapters.length-1){
-            currentChapterIndex++; currentVerseIndex=0;
-            document.getElementById('scriptureChapter').value=currentChapterIndex;
-        } else if(currentBookIndex < bibleData.books.length-1){
-            currentBookIndex++; currentChapterIndex=0; currentVerseIndex=0;
-            document.getElementById('scriptureBook').value=currentBookIndex;
-            document.getElementById('scriptureChapter').value=currentChapterIndex;
-            populateChapterVerses();
-        } else return;
+        const b = bibleData.books[currentBookIndex], c = b.chapters[currentChapterIndex];
+        if(currentVerseIndex<c.verses.length-1) currentVerseIndex++;
+        else if(currentChapterIndex<b.chapters.length-1){ currentChapterIndex++; currentVerseIndex=0; document.getElementById('scriptureChapter').value=currentChapterIndex; }
+        else if(currentBookIndex<bibleData.books.length-1){ currentBookIndex++; currentChapterIndex=0; currentVerseIndex=0; document.getElementById('scriptureBook').value=currentBookIndex; document.getElementById('scriptureChapter').value=currentChapterIndex; populateChapters(); }
+        else return;
         document.getElementById('scriptureVerse').value=currentVerseIndex;
-        updateScripturePreview(); updateVerseIndicator();
-        if(broadcastState.scripture) sendScripture();
+        updateScPreview(); updateVerseInd();
+        if(broadcastState.scripture) sendSc();
     }
-    function populateChapterVerses() {
-        const cs = document.getElementById('scriptureChapter');
-        const vs = document.getElementById('scriptureVerse');
+    function populateChapters() {
+        const cs=document.getElementById('scriptureChapter'), vs=document.getElementById('scriptureVerse');
         cs.innerHTML=''; vs.innerHTML='';
-        const b = bibleData.books[currentBookIndex];
-        b.chapters.forEach((c,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=`Ch ${c.chapter}`; cs.appendChild(o); });
+        bibleData.books[currentBookIndex].chapters.forEach((c,i)=>cs.appendChild(new Option(`Ch ${c.chapter}`,i)));
         cs.value=currentChapterIndex;
-        const ch = b.chapters[currentChapterIndex];
-        ch.verses.forEach((v,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=`V ${v.number}`; vs.appendChild(o); });
+        bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses.forEach((v,i)=>vs.appendChild(new Option(`V ${v.number}`,i)));
         vs.value=currentVerseIndex;
     }
-    function getScriptureRef() {
-        const b = bibleData.books[currentBookIndex];
-        return `${b.englishName} ${b.chapters[currentChapterIndex].chapter}:${b.chapters[currentChapterIndex].verses[currentVerseIndex].number}`;
-    }
-    function getScriptureText() {
-        return bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses[currentVerseIndex].text;
-    }
-    function getVersion() { return document.getElementById('scriptureVersion').value; }
-    function sendScripture() {
-        socket.emit('showScripture', { ref: getScriptureRef(), text: getScriptureText(), version: getVersion() });
-    }
-    function toggleScripture() {
-        const btn = document.getElementById('scriptureToggleBtn');
-        if(broadcastState.scripture) {
-            socket.emit('hideScripture');
-        } else {
-            if(!bibleData){ alert('Loading...'); return; }
-            sendScripture();
-        }
-    }
-    function refreshScripture() {
-        if(!bibleData){ alert('Loading...'); return; }
-        socket.emit('refreshScripture', { ref: getScriptureRef(), text: getScriptureText(), version: getVersion() });
-        const b = document.querySelector('#panelSc .btn-outline');
-        if(b){ b.style.transform='rotate(180deg)'; setTimeout(()=>b.style.transform='',300); }
-    }
+    function getScRef(){ const b=bibleData.books[currentBookIndex]; return `${b.englishName} ${b.chapters[currentChapterIndex].chapter}:${b.chapters[currentChapterIndex].verses[currentVerseIndex].number}`; }
+    function getScText(){ return bibleData.books[currentBookIndex].chapters[currentChapterIndex].verses[currentVerseIndex].text; }
+    function sendSc(){ socket.emit('showScripture',{ref:getScRef(),text:getScText(),version:document.getElementById('scriptureVersion').value}); }
+    function toggleSc(){ broadcastState.scripture ? socket.emit('hideScripture') : sendSc(); }
+    function refreshSc(){ socket.emit('refreshScripture',{ref:getScRef(),text:getScText(),version:document.getElementById('scriptureVersion').value}); }
 
-    // ========== LOWER THIRD ==========
-    function addMessage() {
-        const d = document.createElement('div'); d.className='message-item';
-        d.innerHTML = '<input type="text" placeholder="Message..."><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button>';
-        document.getElementById('scrollMessagesList').appendChild(d);
-    }
-    function removeMessage(btn) {
-        if(document.querySelectorAll('.message-item').length>1) btn.parentElement.remove();
-    }
-    function getScrollMessages() {
-        return Array.from(document.querySelectorAll('#scrollMessagesList input')).map(i=>i.value.trim()).filter(v=>v);
-    }
-    function updateLowerThird() {
-        socket.emit('updateLowerThird', {
-            heading: document.getElementById('ltHeading').value,
-            headline: document.getElementById('ltHeadline').value,
-            scrollMessages: getScrollMessages()
+    // Lower third
+    function addMessage(){ const d=document.createElement('div'); d.className='message-item'; d.innerHTML='<input type="text" placeholder="Message..."><button class="btn btn-ghost btn-xs" onclick="removeMessage(this)">✕</button>'; document.getElementById('scrollMessagesList').appendChild(d); }
+    function removeMessage(b){ if(document.querySelectorAll('.message-item').length>1) b.parentElement.remove(); }
+    function getMsgs(){ return Array.from(document.querySelectorAll('#scrollMessagesList input')).map(i=>i.value.trim()).filter(v=>v); }
+    function updateLt(){ socket.emit('updateLowerThird',{heading:document.getElementById('ltHeading').value,headline:document.getElementById('ltHeadline').value,scrollMessages:getMsgs()}); }
+    function toggleLt(){ socket.emit('toggleLowerThird'); }
+
+    // Speaker
+    document.getElementById('speakerRole').addEventListener('input',()=>{ document.getElementById('speakerPreview').querySelector('.sp-role').textContent=document.getElementById('speakerRole').value||'NOW MINISTERING'; });
+    document.getElementById('speakerName').addEventListener('input',()=>{ document.getElementById('speakerPreview').querySelector('.sp-name').textContent=document.getElementById('speakerName').value||'Name'; });
+    function toggleSp(){ broadcastState.speaker ? socket.emit('hideSpeaker') : socket.emit('showSpeaker',{role:document.getElementById('speakerRole').value,name:document.getElementById('speakerName').value}); }
+
+    // Giving
+    function toggleGv(){ broadcastState.giving ? socket.emit('hideGiving') : socket.emit('showGiving'); }
+
+    // Lyrics
+    function onLyricsInput(){ const raw=document.getElementById('lyricsInput').value; lyricsChunks=raw.trim()?raw.split(/\n\s*\n/).filter(c=>c.trim()):[]; currentLyricIndex=0; updateLyUI(); }
+    function updateLyUI(){ updateLyPreview(); updateChunkList(); updateLyInd(); }
+    function updateLyPreview(){ const p=document.getElementById('lyricsPreview').querySelector('.lyric-text'); p.innerHTML=lyricsChunks.length&&currentLyricIndex<lyricsChunks.length?lyricsChunks[currentLyricIndex].replace(/\n/g,'<br>'):'No lyrics'; }
+    function updateLyInd(){ document.getElementById('lyricIndicator').textContent=lyricsChunks.length?`${currentLyricIndex+1} / ${lyricsChunks.length}`:'0 / 0'; }
+    function updateChunkList(){
+        const list=document.getElementById('chunkList'); list.innerHTML='';
+        if(!lyricsChunks.length){ list.innerHTML='<div class="slide-item" style="color:#555;">No slides</div>'; return; }
+        lyricsChunks.forEach((c,i)=>{
+            const d=document.createElement('div'); d.className='slide-item';
+            if(i===currentLyricIndex) d.classList.add('active');
+            d.textContent=c.replace(/\n/g,' | ').substring(0,55);
+            d.onclick=()=>{ currentLyricIndex=i; updateLyUI(); if(broadcastState.lyrics) socket.emit('showLyrics',{chunks:lyricsChunks,currentIndex:currentLyricIndex}); };
+            list.appendChild(d);
         });
+        setTimeout(()=>{ const a=list.querySelector('.slide-item.active'); if(a) a.scrollIntoView({behavior:'smooth',block:'nearest'}); },100);
     }
-    function toggleLowerThird() {
-        if(broadcastState.lowerThird) socket.emit('hideLowerThird');
-        else updateLowerThird();
-    }
+    function prevLyric(){ if(!lyricsChunks.length||currentLyricIndex<=0) return; currentLyricIndex--; updateLyUI(); if(broadcastState.lyrics) socket.emit('previousLyric'); }
+    function nextLyric(){ if(!lyricsChunks.length||currentLyricIndex>=lyricsChunks.length-1) return; currentLyricIndex++; updateLyUI(); if(broadcastState.lyrics) socket.emit('nextLyric'); }
+    function blankLyrics(){ socket.emit('blankLyrics'); document.getElementById('lyricsPreview').querySelector('.lyric-text').textContent='[Blank - Instrumental]'; }
+    function refreshCurrentLyric(){ socket.emit('refreshCurrentLyric'); setTimeout(()=>updateLyPreview(),450); }
+    function toggleLy(){ broadcastState.lyrics ? socket.emit('hideLyrics') : (lyricsChunks.length?socket.emit('showLyrics',{chunks:lyricsChunks,currentIndex:currentLyricIndex}):alert('Enter lyrics first.')); }
 
-    // ========== SPEAKER ==========
-    document.getElementById('speakerRole').addEventListener('input', ()=>{
-        const p=document.getElementById('speakerPreview');
-        p.querySelector('.speaker-role').textContent=document.getElementById('speakerRole').value||'NOW MINISTERING';
-    });
-    document.getElementById('speakerName').addEventListener('input', ()=>{
-        const p=document.getElementById('speakerPreview');
-        p.querySelector('.speaker-name').textContent=document.getElementById('speakerName').value||'Name';
-    });
-    function toggleSpeaker() {
-        if(broadcastState.speaker) {
-            socket.emit('hideSpeaker');
-        } else {
-            socket.emit('showSpeaker', {
-                role: document.getElementById('speakerRole').value,
-                name: document.getElementById('speakerName').value
-            });
+    // Shortcut toggles
+    function shortcutToggle(type) {
+        switch(type) {
+            case 'lowerThird': toggleLt(); break;
+            case 'scripture': toggleSc(); break;
+            case 'speaker': toggleSp(); break;
+            case 'giving': toggleGv(); break;
+            case 'lyrics': toggleLy(); break;
         }
     }
 
-    // ========== GIVING ==========
-    function toggleGiving() {
-        if(broadcastState.giving) socket.emit('hideGiving');
-        else socket.emit('showGiving');
-    }
-
-    // ========== LYRICS ==========
-    function onLyricsInput() {
-        const raw = document.getElementById('lyricsInput').value;
-        lyricsChunks = raw.trim() ? raw.split(/\n\s*\n/).filter(c=>c.trim()) : [];
-        currentLyricIndex = 0;
-        updateLyricsUI();
-    }
-    function updateLyricsUI() {
-        updateLyricPreview();
-        updateChunkList();
-        updateLyricIndicator();
-    }
-    function updateLyricPreview() {
-        const p = document.getElementById('lyricsPreview').querySelector('.lyric-text');
-        if(lyricsChunks.length>0 && currentLyricIndex<lyricsChunks.length) {
-            p.innerHTML = lyricsChunks[currentLyricIndex].replace(/\n/g,'<br>');
-        } else {
-            p.textContent = 'No lyrics loaded';
-        }
-    }
-    function updateLyricIndicator() {
-        document.getElementById('lyricIndicator').textContent = 
-            lyricsChunks.length>0 ? `${currentLyricIndex+1} / ${lyricsChunks.length}` : '0 / 0';
-    }
-    function updateChunkList() {
-        const list = document.getElementById('chunkList');
-        list.innerHTML = '';
-        if(lyricsChunks.length===0) {
-            list.innerHTML = '<div class="slide-item" style="color:#666;">No slides</div>';
-            return;
-        }
-        lyricsChunks.forEach((chunk,i)=>{
-            const div = document.createElement('div');
-            div.className = 'slide-item';
-            if(i===currentLyricIndex) div.classList.add('active');
-            div.textContent = chunk.replace(/\n/g,' | ').substring(0,60);
-            div.onclick = ()=>{
-                currentLyricIndex = i;
-                updateLyricsUI();
-                if(broadcastState.lyrics) socket.emit('showLyrics',{chunks:lyricsChunks,currentIndex:currentLyricIndex});
-            };
-            list.appendChild(div);
+    // Update UI based on state
+    function updateAllUI(state) {
+        broadcastState = state;
+        
+        // Shortcuts
+        const sets = [
+            ['shortLt','lowerThird'], ['shortSc','scripture'], ['shortSp','speaker'],
+            ['shortGv','giving'], ['shortLy','lyrics']
+        ];
+        sets.forEach(([id, key]) => {
+            const el = document.getElementById(id);
+            const isLive = state[key];
+            el.classList.toggle('live', isLive);
+            el.querySelector('.shortcut-label').textContent = isLive ? 'LIVE' : 'OFF';
         });
-        // Auto-scroll to active
-        setTimeout(()=>{
-            const active = list.querySelector('.slide-item.active');
-            if(active) active.scrollIntoView({behavior:'smooth',block:'nearest'});
-        },100);
-    }
-    function previousLyric() {
-        if(!lyricsChunks.length) return;
-        if(currentLyricIndex>0) currentLyricIndex--;
-        updateLyricsUI();
-        if(broadcastState.lyrics) socket.emit('previousLyric');
-    }
-    function nextLyric() {
-        if(!lyricsChunks.length) return;
-        if(currentLyricIndex<lyricsChunks.length-1) currentLyricIndex++;
-        updateLyricsUI();
-        if(broadcastState.lyrics) socket.emit('nextLyric');
-    }
-    function blankLyrics() {
-        // Send blank/empty text to broadcast
-        socket.emit('updateLyricIndex', { currentIndex: -1, text: '' });
-        // Briefly update preview
-        const p = document.getElementById('lyricsPreview').querySelector('.lyric-text');
-        p.textContent = '[Blank - Instrumental]';
-    }
-    function refreshCurrentLyric() {
-        // Re-show current lyric (hide briefly then show)
-        if(!lyricsChunks.length) return;
-        socket.emit('updateLyricIndex', { currentIndex: -1, text: '' });
-        setTimeout(()=>{
-            if(broadcastState.lyrics && lyricsChunks.length>0) {
-                socket.emit('updateLyricIndex', { 
-                    currentIndex: currentLyricIndex, 
-                    text: lyricsChunks[currentLyricIndex] 
-                });
-            }
-            updateLyricPreview();
-        }, 400);
-    }
-    function toggleLyrics() {
-        if(broadcastState.lyrics) {
-            socket.emit('hideLyrics');
-        } else {
-            if(!lyricsChunks.length){ alert('Enter lyrics first.'); return; }
-            socket.emit('showLyrics', { chunks: lyricsChunks, currentIndex: currentLyricIndex });
-        }
-    }
 
-    // ========== VISIBILITY STATE MANAGEMENT ==========
-    function updateAllButtons(state) {
-        // Update local state
-        broadcastState = {
-            lowerThird: state.lowerThird,
-            scripture: state.scripture,
-            speaker: state.speaker,
-            giving: state.giving,
-            lyrics: state.lyrics
-        };
-
-        // Update status indicators
-        document.getElementById('statusLt').classList.toggle('active', state.lowerThird);
-        document.getElementById('statusSc').classList.toggle('active', state.scripture);
-        document.getElementById('statusSp').classList.toggle('active', state.speaker);
-        document.getElementById('statusGv').classList.toggle('active', state.giving);
-        document.getElementById('statusLy').classList.toggle('active', state.lyrics);
-
-        // Update toggle buttons
-        const ltBtn = document.getElementById('ltToggleBtn');
-        if(state.lowerThird) { ltBtn.textContent='Hide'; ltBtn.className='btn btn-danger'; }
-        else { ltBtn.textContent='Show'; ltBtn.className='btn btn-primary'; }
-
+        // Buttons
+        document.getElementById('ltToggleBtn').textContent = state.lowerThird ? 'Hide' : 'Show';
+        document.getElementById('ltToggleBtn').className = state.lowerThird ? 'btn btn-red' : 'btn btn-green';
+        
         const scBtn = document.getElementById('scriptureToggleBtn');
         scBtn.textContent = state.scripture ? 'Hide Scripture' : 'Show Scripture';
-        scBtn.className = state.scripture ? 'btn btn-danger' : 'btn btn-success';
-
+        scBtn.className = state.scripture ? 'btn btn-red' : 'btn btn-green';
+        
         const spBtn = document.getElementById('speakerToggleBtn');
         spBtn.textContent = state.speaker ? 'Hide Speaker' : 'Show Speaker';
-        spBtn.className = state.speaker ? 'btn btn-danger' : 'btn btn-success';
-
+        spBtn.className = state.speaker ? 'btn btn-red' : 'btn btn-green';
+        
         const gvBtn = document.getElementById('givingToggleBtn');
         gvBtn.textContent = state.giving ? 'Hide Giving' : 'Show Giving';
-        gvBtn.className = state.giving ? 'btn btn-danger' : 'btn btn-success';
-
+        gvBtn.className = state.giving ? 'btn btn-red' : 'btn btn-green';
+        
         const lyBtn = document.getElementById('lyricsToggleBtn');
         lyBtn.textContent = state.lyrics ? 'Hide Lyrics' : 'Show Lyrics';
-        lyBtn.className = state.lyrics ? 'btn btn-danger' : 'btn btn-success';
+        lyBtn.className = state.lyrics ? 'btn btn-red' : 'btn btn-green';
 
-        // Update preview screen
-        const miniLt = document.getElementById('previewMiniLt');
-        const miniSc = document.getElementById('previewMiniScripture');
-        miniLt.style.display = state.lowerThird ? 'flex' : 'none';
-        miniSc.style.display = state.scripture ? 'block' : 'none';
-        if(state.scripture && bibleData) {
-            miniSc.textContent = `${getScriptureRef()} - ${getScriptureText().substring(0,60)}...`;
-        }
+        // Preview overlay
+        const ov = document.getElementById('previewOverlay');
+        if(state.scripture) { ov.style.display='block'; ov.textContent='Scripture Active'; ov.style.color='#ffd700'; }
+        else if(state.speaker) { ov.style.display='block'; ov.textContent='Speaker Active'; ov.style.color='#fbad18'; }
+        else if(state.giving) { ov.style.display='block'; ov.textContent='Giving Active'; ov.style.color='#f59e0b'; }
+        else if(state.lyrics) { ov.style.display='block'; ov.textContent='Lyrics Active'; ov.style.color='#ec4899'; }
+        else if(state.lowerThird) { ov.style.display='block'; ov.textContent='Main Lower Third Active'; ov.style.color='#fbad18'; }
+        else { ov.style.display='none'; }
     }
 
-    socket.on('visibilityState', (state) => {
-        updateAllButtons(state);
-    });
-
-    socket.on('speakerAutoHidden', () => {
-        // Handled by visibilityState
-    });
-
-    socket.on('currentState', (state) => {
-        updateAllButtons({
-            lowerThird: state.lowerThird.visible,
-            scripture: state.scripture.visible,
-            speaker: state.speaker.visible,
-            giving: state.giving?.visible || false,
-            lyrics: state.lyrics?.visible || false
+    socket.on('visibilityState', updateAllUI);
+    socket.on('currentState', (s) => {
+        updateAllUI({
+            lowerThird: s.lowerThird.visible,
+            scripture: s.scripture.visible,
+            speaker: s.speaker.visible,
+            giving: s.giving?.visible||false,
+            lyrics: s.lyrics?.visible||false
         });
     });
 
-    // ========== INIT ==========
-    loadBibleData();
+    // Init
+    loadBible();
+    document.getElementById('speakerRole').dispatchEvent(new Event('input'));
+    document.getElementById('speakerName').dispatchEvent(new Event('input'));
 </script>
 </body>
-</html>
+                                    </html>
