@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     body {
       background-color: #3b4852;
       display: flex; justify-content: center; align-items: flex-end;
@@ -262,6 +262,32 @@
       min-height: 200px; height: auto; width: 100%;
       transition: min-height 0.3s ease;
     }
+     .giving-content {
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.6;
+      width: 100%;
+    }
+        .giving-header{
+      font-size: 24;
+      font-weight: 800;
+      color: #0d0052;
+    }
+    .giving-body{
+      font-size: 24;
+      font-weight: 800;
+    }
+    .giving-footer{
+      font-size: 20;
+      font-weight: 700;
+      color: #0d0052;
+    }
     .giving-content { color: #fff; font-family: 'Inter', sans-serif; font-size: 18px; line-height: 1.6; width: 100%; }
 
     /* LYRICS */
@@ -274,7 +300,7 @@
       min-height: 45px; height: auto; width: 100%;
       transition: min-height 0.3s ease;
     }
-    .lyrics-content { color: #fff; font-family: 'Inter', sans-serif; font-size: 18px; line-height: 1.5; text-align: center; width: 100%; }
+    .lyrics-content { color: #fff; font-size: 22px; font-weight: 600; line-height: 1.5; text-align: center; width: 100%; }
   </style>
 </head>
 <body>
@@ -308,7 +334,15 @@
     </div>
   </div>
   <div class="broadcast-module giving-wrapper" id="gvContainer">
-    <div class="giving-module"><div class="giving-card"><div class="giving-content" id="gvContent"></div></div></div>
+    <div class="giving-module"><div class="giving-card"><div class="giving-content" id="gvContent">
+      <div class="giving-content" id="gvContent">
+          <div class="giving-header">TITHES AND OFFERING</div>
+          <div class="giving-body">
+            <span>PayBill: 516 600</span>
+            <span>Account No: 701 701</span>
+          </div>
+          <div class="giving-footer">Bishop Dr.JJ: 0700649578</div>
+    </div></div>
   </div>
   <div class="broadcast-module lyrics-wrapper" id="lyContainer">
     <div class="lyrics-module"><div class="lyrics-card"><div class="lyrics-content" id="lyContent"></div></div></div>
